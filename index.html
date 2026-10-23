@@ -162,7 +162,27 @@ const API = 'https://script.google.com/macros/s/AKfycbzKEEgyV90yVAwuMomCDwbAvvzM
   .green { background: var(--green); } .purple { background: var(--purple); }
 
   #fab { position: fixed; right: 18px; bottom: 22px; z-index: 6; border: 0; border-radius: 999px; background: var(--accent);
-         color: #fff; font-weight: 600; font-size: 1.05rem; padding: 15px 22px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+         color: #fff; font-weight: 600; font-size: 1.05rem; padding: 15px 22px; box-shadow: 0 6px 18px rgba(0,0,0,.25); overflow: hidden; }
+  /* A light sweep across the button (students only, see glint()). */
+  #fab::after { content: ''; position: absolute; top: -20%; bottom: -20%; left: 0; width: 45%; pointer-events: none;
+                background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+                transform: translateX(-160%) skewX(-18deg); }
+  #fab.glint::after { animation: sweep 1.1s ease-in-out; }
+  #fab.glint { animation: halo 1.6s ease-out; }
+  @keyframes sweep { to { transform: translateX(330%) skewX(-18deg); } }
+  @keyframes halo { 0% { box-shadow: 0 6px 18px rgba(0,0,0,.25), 0 0 0 0 rgba(47,93,80,.55); }
+                    100% { box-shadow: 0 6px 18px rgba(0,0,0,.25), 0 0 0 16px rgba(47,93,80,0); } }
+  @media (prefers-reduced-motion: reduce) {
+    #fab.glint::after { animation: none; }
+    #fab.glint { animation: soft 1.6s ease-in-out; }
+    @keyframes soft { 50% { background: #4a8a76; } }
+  }
+
+  .fmtbar { display: flex; gap: 6px; margin-bottom: 6px; }
+  .fmtbar button { border: 1px solid var(--line); background: #fff; border-radius: 8px; min-width: 38px; height: 34px; font-size: 1rem; }
+  .fmtpreview { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .95rem; background: #faf8f3; border: 1px dashed var(--line);
+                border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
+  .fmtpreview::before { content: 'Així es veurà: '; color: var(--muted); font-size: .8rem; }
 
   /* ---------- dialogs ---------- */
   .overlay { position: fixed; inset: 0; z-index: 10; background: rgba(20,18,14,.55); display: none;
@@ -325,8 +345,14 @@ const API = 'https://script.google.com/macros/s/AKfycbzKEEgyV90yVAwuMomCDwbAvvzM
     <label class="field" id="pColWrap" hidden><span>Columna</span><select id="pCol"></select></label>
     <label class="field" id="pNameWrap"><span id="pNameLabel">El teu nom (opcional)</span>
       <input type="text" id="pName" maxlength="40" autocomplete="off"></label>
-    <label class="field"><span>Publicació</span>
-      <textarea id="pText" maxlength="1000" placeholder="Què vols compartir?"></textarea></label>
+    <div class="field"><span><label for="pText">Publicació</label></span>
+      <div class="fmtbar" data-for="pText" role="toolbar" aria-label="Format del text">
+        <button type="button" data-m="**" title="Negreta (Ctrl+B)" aria-label="Negreta"><b>B</b></button>
+        <button type="button" data-m="*" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><i>I</i></button>
+        <button type="button" data-m="__" title="Subratllat (Ctrl+U)" aria-label="Subratllat"><u>U</u></button>
+      </div>
+      <textarea id="pText" maxlength="1000" placeholder="Què vols compartir?"></textarea>
+      <div class="fmtpreview" id="pFmt" hidden></div></div>
     <div id="pRec" hidden>
       <video id="recVideo" muted playsinline hidden></video>
       <div><span class="recdot"></span><b id="recTime">0:00</b> <span class="muted" id="recMax"></span></div>
@@ -356,8 +382,13 @@ const API = 'https://script.google.com/macros/s/AKfycbzKEEgyV90yVAwuMomCDwbAvvzM
 <div class="overlay" id="corrector">
   <form class="sheet" id="correctForm">
     <h2>Corregeix</h2>
-    <label class="field"><span>Corregeix el text directament</span>
-      <textarea id="cText" maxlength="1000"></textarea></label>
+    <div class="field"><span><label for="cText">Corregeix el text directament</label></span>
+      <div class="fmtbar" data-for="cText" role="toolbar" aria-label="Format del text">
+        <button type="button" data-m="**" title="Negreta (Ctrl+B)" aria-label="Negreta"><b>B</b></button>
+        <button type="button" data-m="*" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><i>I</i></button>
+        <button type="button" data-m="__" title="Subratllat (Ctrl+U)" aria-label="Subratllat"><u>U</u></button>
+      </div>
+      <textarea id="cText" maxlength="1000"></textarea></div>
     <div class="field"><span>Com ho veuran</span><div id="cPreview"></div>
       <div class="legend"><del class="d">tatxat</del> = el que treus · <ins class="i">subratllat</ins> = el que afegeixes</div></div>
     <div class="actions">
@@ -730,7 +761,7 @@ function show(view) {
   $('tools').hidden = !(inBoard && S.teacher);
   $('backBtn').hidden = !S.me || view === 'home';
   $('fab').hidden = true;
-  if (!inBoard) { stopPoll(); setStatus(''); applyBackground(''); closeSlides(); }
+  if (!inBoard) { stopPoll(); setStatus(''); applyBackground(''); closeSlides(); stopGlints(); glintBoard = ''; }
   if (view === 'home') setTitle('Els meus taulers');
   if (view === 'join') setTitle('Class Board');
 }
@@ -900,24 +931,43 @@ function openBoard(code) {
 }
 
 // Apply a full board or only the changes ({delta: true}) from the server.
+// Updates the posts/comments we already have in place (so buttons on the cards always act on
+// the current item) and adds new ones. With keepOthers, items not in `incoming` are kept.
+function mergeItems(current, incoming, gone, keepOthers) {
+  const byId = {};
+  current.forEach(it => { byId[it.id] = it; });
+  const seen = {};
+  const out = incoming.map(n => {
+    seen[n.id] = 1;
+    const o = byId[n.id];
+    if (!o) return n;
+    delete o.sending; delete o.progress;
+    return Object.assign(o, n);
+  });
+  current.forEach(it => {
+    if (seen[it.id] || gone[it.id]) return;
+    if (keepOthers || it.sending) out.push(it);   // full refresh: keep only my posts still uploading
+  });
+  return out;
+}
+
 function applyData(d) {
   if (d.delta && S.d) {
     const cur = S.d;
     const gone = {};
     (d.gone || []).forEach(id => { gone[id] = 1; });
-    const np = {}, nc = {};
-    d.posts.forEach(p => { np[p.id] = 1; });
-    d.comments.forEach(c => { nc[c.id] = 1; });
-    cur.posts = cur.posts.filter(p => !gone[p.id] && !np[p.id]).concat(d.posts);
-    cur.comments = cur.comments.filter(c => !gone[c.id] && !nc[c.id]).concat(d.comments);
+    cur.posts = mergeItems(cur.posts, d.posts, gone, true);
+    cur.comments = mergeItems(cur.comments, d.comments, gone, true);
     if (d.meta) cur.meta = d.meta;
     cur.pend = d.pend;
     cur.teacher = d.teacher;
   } else {
-    // Keep my own posts that are still being uploaded.
-    const sending = S.d ? S.d.posts.filter(p => p.sending && !d.posts.some(x => x.id === p.id)) : [];
+    const old = S.d;
     S.d = d;
-    S.d.posts = d.posts.concat(sending);
+    if (old) {
+      S.d.posts = mergeItems(old.posts, d.posts, {}, false);
+      S.d.comments = mergeItems(old.comments, d.comments, {}, false);
+    }
   }
   S.d.posts.sort((a, b) => a.order - b.order);
   S.d.comments.sort((a, b) => a.time - b.time);
@@ -932,6 +982,7 @@ function applyData(d) {
   });
   if (changed) savePend();
   render();
+  if (glintBoard !== S.id) { glintBoard = S.id; startGlints(); }
 }
 
 /* ---------- polling ---------- */
@@ -1188,11 +1239,13 @@ function fillCard(c, p, comments) {
   const mode = viewMode[p.id] || 'corr';
   if (p.corr) {
     const t = el('div', 'text');
-    if (mode === 'corr') renderDiff(t, p.text, p.corr);
-    else t.textContent = mode === 'orig' ? p.text : p.corr;
+    if (mode === 'corr') renderDiff(t, plainText(p.text), plainText(p.corr));
+    else renderFmt(t, mode === 'orig' ? p.text : p.corr);
     body.push(t);
   } else if (p.text) {
-    body.push(el('div', 'text', p.text));
+    const t = el('div', 'text');
+    renderFmt(t, p.text);
+    body.push(t);
   }
   let status = when(p.time) + (p.edited ? ' · editat' : '');
   if (p.sending) status = p.sending === 'edit' ? 'Desant…' : (p.progress != null ? 'Pujant… ' + Math.round(p.progress * 100) + '%' : 'Publicant…');
@@ -1483,6 +1536,116 @@ function sendComment(p, text) {
   });
 }
 
+/* ---------- bold / italic / underline ----------
+   Posts store plain text with markers: **bold**, *italic*, __underline__.
+   Markers must touch the words they wrap, so "5*3" or snake_case stay as typed. */
+const FMT_RE = /(?<![\p{L}\p{N}*_])(\*\*|__|\*)(?=[^\s*_])([\s\S]*?[^\s*_]|[^\s*_])\1(?![\p{L}\p{N}*_])/gu;
+const FMT_TAG = { '**': 'strong', '*': 'em', '__': 'u' };
+function renderFmt(box, text) {
+  box.textContent = '';
+  box.appendChild(fmtNodes(String(text || ''), 0));
+}
+function fmtNodes(text, depth) {
+  const frag = document.createDocumentFragment();
+  let last = 0;
+  FMT_RE.lastIndex = 0;
+  const found = [];
+  let m;
+  while ((m = FMT_RE.exec(text))) found.push({ i: m.index, len: m[0].length, mark: m[1], inner: m[2] });
+  found.forEach(f => {
+    if (f.i > last) frag.appendChild(document.createTextNode(text.slice(last, f.i)));
+    const n = document.createElement(FMT_TAG[f.mark]);
+    if (depth < 3) n.appendChild(fmtNodes(f.inner, depth + 1)); else n.textContent = f.inner;
+    frag.appendChild(n);
+    last = f.i + f.len;
+  });
+  if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+  return frag;
+}
+// The text without markers (corrections compare words, not formatting).
+function plainText(text) {
+  let s = String(text || ''), prev;
+  do { prev = s; s = s.replace(FMT_RE, '$2'); } while (s !== prev);
+  return s;
+}
+function hasFmt(text) { FMT_RE.lastIndex = 0; return FMT_RE.test(String(text || '')); }
+
+// Wrap the selection in markers, or remove them if it's already wrapped.
+function applyMark(ta, mark) {
+  const v = ta.value, a = ta.selectionStart, b = ta.selectionEnd, L = mark.length;
+  ta.focus();
+  if (a >= L && v.slice(a - L, a) === mark && v.slice(b, b + L) === mark) {
+    ta.setSelectionRange(a - L, b + L);
+    replaceSel(ta, v.slice(a, b));
+    ta.setSelectionRange(a - L, b - L);
+  } else if (b - a >= 2 * L && v.slice(a, a + L) === mark && v.slice(b - L, b) === mark) {
+    replaceSel(ta, v.slice(a + L, b - L));
+    ta.setSelectionRange(a, b - 2 * L);
+  } else {
+    // Keep spaces outside the markers ("word " -> "**word** ").
+    let s = a, e = b;
+    while (s < e && /\s/.test(v[s])) s++;
+    while (e > s && /\s/.test(v[e - 1])) e--;
+    ta.setSelectionRange(s, e);
+    replaceSel(ta, mark + v.slice(s, e) + mark);
+    ta.setSelectionRange(s + L, e + L);
+  }
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function replaceSel(ta, text) {
+  // execCommand keeps the browser's undo (Ctrl+Z) working; setRangeText is the fallback.
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, text); } catch (e) {}
+  if (!ok || ta.value.length > 1000) ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end');
+}
+document.querySelectorAll('.fmtbar').forEach(bar => {
+  const ta = $(bar.dataset.for);
+  bar.addEventListener('mousedown', e => e.preventDefault());   // keep the text selected
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('button[data-m]');
+    if (b) applyMark(ta, b.dataset.m);
+  });
+  ta.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = e.key.toLowerCase();
+    const mark = k === 'b' ? '**' : k === 'i' ? '*' : k === 'u' ? '__' : '';
+    if (mark) { e.preventDefault(); applyMark(ta, mark); }
+  });
+});
+$('pText').addEventListener('input', updateFmtPreview);
+function updateFmtPreview() {
+  const v = $('pText').value;
+  const show = hasFmt(v);
+  $('pFmt').hidden = !show;
+  if (show) renderFmt($('pFmt'), v);
+}
+
+/* ---------- glint on "+ Publica" (students only) ----------
+   On opening a board and then every minute, at most 5 times, until this device posts there. */
+const GLINT_EVERY = window.GLINT_EVERY || 60000, GLINT_MAX = 5;
+let glints = 0, glintTimer = null, glintStart = null, glintOff = null, glintBoard = '';
+function glintAllowed() {
+  return S.view === 'board' && S.d && !S.teacher && !$('fab').hidden && !document.hidden && !SS.open &&
+    !store.get('posted', {})[S.id] && !document.querySelector('.overlay.open');
+}
+function glint() {
+  if (glints >= GLINT_MAX || !glintAllowed()) return;
+  const f = $('fab');
+  f.classList.remove('glint');
+  void f.offsetWidth;   // restart the animation
+  f.classList.add('glint');
+  glints++;
+  clearTimeout(glintOff);
+  glintOff = setTimeout(() => f.classList.remove('glint'), 1700);
+}
+function startGlints() {
+  stopGlints();
+  glints = 0;
+  glintStart = setTimeout(glint, 900);
+  glintTimer = setInterval(() => { if (glints >= GLINT_MAX) stopGlints(); else glint(); }, GLINT_EVERY);
+}
+function stopGlints() { clearTimeout(glintStart); clearInterval(glintTimer); glintTimer = null; }
+
 /* ---------- reactions ---------- */
 function reactRow(it) {
   const box = el('span', 'reacts');
@@ -1618,7 +1781,7 @@ function openCorrector(p) {
   setTimeout(() => $('cText').focus(), 50);
 }
 function updateCorrPreview() {
-  if (correcting) renderDiff($('cPreview'), correcting.text, $('cText').value);
+  if (correcting) renderDiff($('cPreview'), plainText(correcting.text), plainText($('cText').value));
 }
 $('cText').addEventListener('input', () => { clearTimeout(cpTimer); cpTimer = setTimeout(updateCorrPreview, 80); });
 function closeCorrector() { close('corrector'); correcting = null; }
@@ -1957,7 +2120,7 @@ function slideNode(s) {
   text.appendChild(el('h2', 'sl-name', p.name || 'Anònim'));
   if (p.text) {
     const t = el('div', 'sl-text');
-    if (p.corr) renderDiff(t, p.text, p.corr); else t.textContent = p.text;
+    if (p.corr) renderDiff(t, plainText(p.text), plainText(p.corr)); else renderFmt(t, p.text);
     t.style.fontSize = textSize(Math.max(p.text.length, (p.corr || '').length), hasMedia);
     text.appendChild(t);
   }
@@ -2290,6 +2453,7 @@ function openComposer(colId) {
   $('pNameWrap').hidden = S.teacher;
   $('pNameLabel').textContent = m.nameReq ? 'El teu nom' : 'El teu nom (opcional)';
   $('pErr').textContent = '';
+  updateFmtPreview();
   open('composer');
   setTimeout(() => $('pText').focus(), 50);
 }
@@ -2312,6 +2476,7 @@ function openEditor(p) {
   }
   showAttach();
   $('pErr').textContent = '';
+  updateFmtPreview();
   open('composer');
   setTimeout(() => $('pText').focus(), 50);
 }
@@ -2363,6 +2528,9 @@ async function sendPost(p, payload, a) {
     const r = await run('addPost', S.id, payload);
     busy--; counted = false;
     p.sending = false;
+    const posted = store.get('posted', {});
+    posted[S.id] = 1;
+    store.set('posted', posted);
     if (r.img) {
       p.img = r.img; p.pub = r.pub;
       imgCache[r.img] = a && a.kind === 'image' ? a.data : (a ? a.url : '');
@@ -2385,6 +2553,7 @@ async function sendPost(p, payload, a) {
     if (a) setAttach(a);
     openComposer(payload.col || null);
     $('pText').value = payload.text || '';
+    updateFmtPreview();
     $('pErr').textContent = errText(err);
     S.v = ''; pollSoon();
   }
