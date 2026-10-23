@@ -6,7 +6,7 @@
 <title>Class Board</title>
 <script>
 // ▼▼▼ Paste the STUDENT web app URL (ends in /exec) between the quotes ▼▼▼
-const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2SfhDK9bZrRd9FZEWYK6cbKyOQCqZDd_TiFb6wWOAB/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2SfhDK9bZrRd9FZEWYK6cbKyOQCqZDd_TiFb6wWOAB/exechttps://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2SfhDK9bZrRd9FZEWYK6cbKyOQCqZDd_TiFb6wWOAB/exec';
 // ▲▲▲ That is the only line you ever need to edit in this file ▲▲▲
 </script>
 <style>
@@ -107,6 +107,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   .cmt-form { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
   .cmt-form input { flex: 1 1 140px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; }
   .cmt-form button { border: 0; background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 600; }
+  .cmt-form .plain-btn { background: rgba(255,255,255,.85); color: var(--ink); }
 
   .card.dragging { position: fixed; z-index: 20; pointer-events: none; transform: rotate(2deg); box-shadow: 0 14px 34px rgba(0,0,0,.3); }
   .placeholder { border: 3px dashed var(--accent); border-radius: 12px; background: rgba(47,93,80,.08); }
@@ -232,7 +233,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
 <!-- New post -->
 <div class="overlay" id="composer">
   <form class="sheet" id="composerForm">
-    <h2>Nova publicació</h2>
+    <h2 id="pTitle">Nova publicació</h2>
     <label class="field" id="pColWrap" hidden><span>Columna</span><select id="pCol"></select></label>
     <label class="field"><span id="pNameLabel">El teu nom (opcional)</span>
       <input type="text" id="pName" maxlength="40" autocomplete="off"></label>
@@ -826,12 +827,14 @@ function makeCard(p) {
   if (p.status === 'pending') top.appendChild(el('span', 'chip', 'Pendent d\'aprovació'));
   if (p.role === 'teacher') top.appendChild(el('span', 'chip teacher', 'Professorat'));
   top.appendChild(el('span', 'grow'));
+  if (canChange(p)) top.appendChild(btn('x', '✎', 'Edita', () => openEditor(p)));
   if ((T || TOK[p.id]) && !p.sending) top.appendChild(btn('x', '✕', 'Esborra', () => removeItem(p, 'post')));
   if (top.children.length > 1) card.appendChild(top);
 
   if (p.img || p.localImg) card.appendChild(makeImg(p));
   if (p.text) card.appendChild(el('div', 'text', p.text));
-  card.appendChild(el('div', 'meta', (p.name || 'Anònim') + ' · ' + (p.sending ? 'Publicant…' : when(p.time))));
+  card.appendChild(el('div', 'meta', (p.name || 'Anònim') + ' · ' +
+    (p.sending ? (p.sending === 'edit' ? 'Desant…' : 'Publicant…') : when(p.time) + (p.edited ? ' · editat' : ''))));
 
   if (T && p.status === 'pending') {
     const row = el('div', 'approve');
@@ -899,13 +902,22 @@ function commentsPanel(p, list) {
   const box = el('div', 'comments');
   if (!list.length) box.appendChild(el('div', 'muted', 'Encara no hi ha comentaris.'));
   list.forEach(c => {
+    if (editingComment === c.id) { box.appendChild(commentEditor(p, c)); return; }
     const row = el('div', 'cmt');
     const body = el('div', 'body');
     body.appendChild(el('span', 'who', (c.role === 'teacher' ? '🎓 ' : '') + (c.name || 'Anònim')));
     body.appendChild(document.createTextNode(c.text + ' '));
-    body.appendChild(el('span', 'when', c.sending ? 'Enviant…' : (c.status === 'pending' ? 'Pendent d\'aprovació' : when(c.time))));
+    body.appendChild(el('span', 'when', c.sending ? (c.sending === 'edit' ? 'Desant…' : 'Enviant…') :
+      (c.status === 'pending' ? 'Pendent d\'aprovació' : when(c.time) + (c.edited ? ' · editat' : ''))));
     row.appendChild(body);
     if (T && c.status === 'pending') row.appendChild(btn('x', '✓', 'Aprova', () => approveItem(c)));
+    if (canChange(c)) row.appendChild(btn('x', '✎', 'Edita', () => {
+      editingComment = c.id;
+      drafts['edit:' + c.id] = c.text;
+      render();
+      const i = document.querySelector('.cmt-input[data-kind="edit"]');
+      if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(i.value.length, i.value.length); }
+    }));
     if ((T || TOK[c.id]) && !c.sending) row.appendChild(btn('x', '✕', 'Esborra', () => removeItem(c, 'comment')));
     box.appendChild(row);
   });
@@ -941,6 +953,64 @@ function commentsPanel(p, list) {
   }
   return box;
 }
+// Can this device change (edit) the item? Teachers: always. Students: their own, if the board is open.
+function canChange(it) {
+  if (it.sending) return false;
+  if (S.teacher) return true;
+  return !!TOK[it.id] && !S.d.meta.locked;
+}
+
+let editingComment = null;
+function commentEditor(p, c) {
+  const form = el('form', 'cmt-form');
+  const input = el('input', 'cmt-input');
+  input.maxLength = 500;
+  input.value = drafts['edit:' + c.id] != null ? drafts['edit:' + c.id] : c.text;
+  input.dataset.post = p.id;
+  input.dataset.kind = 'edit';
+  input.addEventListener('input', () => { drafts['edit:' + c.id] = input.value; });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.stopPropagation(); editingComment = null; render(); }
+  });
+  form.appendChild(input);
+  form.appendChild(el('button', '', 'Desa'));
+  form.appendChild(btn('plain-btn', 'Cancel·la', '', () => { editingComment = null; render(); }));
+  form.addEventListener('submit', e => { e.preventDefault(); saveCommentEdit(c, input.value); });
+  return form;
+}
+
+function saveCommentEdit(c, text) {
+  text = text.trim();
+  if (!text) { toast('Escriu un comentari.', true); return; }
+  editingComment = null;
+  delete drafts['edit:' + c.id];
+  if (text === c.text) { render(); return; }
+  const prev = { text: c.text, edited: c.edited, status: c.status };
+  c.text = text; c.edited = Date.now(); c.sending = 'edit';
+  render();
+  busy++;
+  run('editItem', S.id, c.id, TOK[c.id] || '', { text })
+    .then(r => {
+      busy--;
+      c.sending = false;
+      if (r.status === 'pending' && !S.teacher) {
+        c.status = 'pending';
+        PEND[c.id] = { b: S.id, kind: 'comment', item: Object.assign({}, c) };
+        savePend();
+        toast('Canvis desats. Es veuran quan el professorat ho aprovi.');
+      }
+      render();
+      pollSoon();
+    })
+    .catch(e => {
+      busy--;
+      Object.assign(c, prev, { sending: false });
+      render();
+      toast(errText(e), true);
+      S.v = ''; pollSoon();
+    });
+}
+
 function focusComment(postId) {
   const i = document.querySelector('.cmt-input[data-post="' + postId + '"][data-kind="text"]');
   if (i) i.focus({ preventScroll: true });
@@ -1144,9 +1214,9 @@ COLORS.forEach(c => {
   b.dataset.color = c.k;
   $('swatches').appendChild(b);
 });
-function setColor(k) {
+function setColor(k, keep) {
   pColor = k;
-  store.set('color', k);
+  if (!keep) store.set('color', k);
   document.querySelectorAll('#swatches .swatch').forEach(b => {
     const on = b.dataset.color === k;
     b.setAttribute('aria-pressed', String(on));
@@ -1156,8 +1226,80 @@ function setColor(k) {
 }
 setColor(COLOR_KEYS.includes(pColor) ? pColor : 'yellow');
 
+// The composer is used for new posts and for editing (editing = the post being edited).
+let editing = null, imgState = 'keep';
+function setComposerMode(isEdit) {
+  $('pTitle').textContent = isEdit ? 'Edita la publicació' : 'Nova publicació';
+  $('pSend').textContent = isEdit ? 'Desa' : 'Publica';
+}
+
+let composerWasEdit = false;
+function openEditor(p) {
+  editing = p;
+  composerWasEdit = true;
+  imgState = 'keep';
+  imageData = '';
+  setComposerMode(true);
+  $('pColWrap').hidden = true;
+  $('pName').closest('.field').hidden = true;
+  $('pText').value = p.text || '';
+  setColor(COLOR_KEYS.includes(p.color) ? p.color : 'yellow', true);
+  const src = p.localImg || (p.img && (imgCache[p.img] || (p.pub ? thumb(p.img, 800) : (imgEls[p.img] && imgEls[p.img].src)))) || '';
+  $('pPreview').querySelector('img').src = src;
+  $('pPreview').hidden = !(p.img || p.localImg);
+  $('pErr').textContent = '';
+  open('composer');
+  setTimeout(() => $('pText').focus(), 50);
+}
+
+function saveEdit() {
+  const p = editing;
+  const text = $('pText').value.trim();
+  const hasImg = imgState === 'keep' ? !!(p.img || p.localImg) : imgState === 'new';
+  if (!text && !hasImg) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto.'; return; }
+  const image = imgState === 'new' ? imageData : (imgState === 'removed' ? '' : null);
+  const prev = { text: p.text, color: p.color, img: p.img, localImg: p.localImg, pub: p.pub, edited: p.edited, status: p.status };
+  p.text = text; p.color = pColor; p.edited = Date.now(); p.sending = 'edit';
+  if (imgState === 'new') { p.img = ''; p.localImg = imageData; }
+  if (imgState === 'removed') { p.img = ''; p.localImg = ''; }
+  editing = null; imageData = ''; imgState = 'keep';
+  $('pText').value = ''; $('pPreview').hidden = true;
+  close('composer');
+  render();
+  busy++;
+  run('editItem', S.id, p.id, TOK[p.id] || '', { text, color: p.color, image })
+    .then(r => {
+      busy--;
+      p.sending = false;
+      if (image && r.img) { p.img = r.img; p.pub = r.pub; imgCache[r.img] = image; }
+      if (r.status === 'pending' && !S.teacher) {
+        p.status = 'pending';
+        PEND[p.id] = { b: S.id, kind: 'post', item: Object.assign({}, p, { localImg: p.localImg || (p.img && imgCache[p.img]) || '' }) };
+        savePend();
+        toast('Canvis desats. Es veuran quan el professorat ho aprovi.');
+      }
+      render();
+      pollSoon();
+    })
+    .catch(err => {
+      busy--;
+      Object.assign(p, prev, { sending: false });
+      render();
+      toast(errText(err), true);
+      S.v = ''; pollSoon();
+    });
+}
+
 function openComposer(colId) {
   const m = S.d.meta;
+  editing = null;
+  if (composerWasEdit) {
+    // Don't carry an edited post's text or photo into a new post.
+    composerWasEdit = false;
+    $('pText').value = ''; imageData = ''; imgState = 'keep'; $('pPreview').hidden = true;
+  }
+  setComposerMode(false);
+  setColor(store.get('color', pColor), true);
   const pick = $('pCol');
   pick.textContent = '';
   if (m.type === 'columns') {
@@ -1186,12 +1328,13 @@ $('pFile').onchange = async e => {
   $('pErr').textContent = 'Preparant la foto…';
   try {
     imageData = await shrink(f);
+    imgState = 'new';
     $('pPreview').querySelector('img').src = imageData;
     $('pPreview').hidden = false;
     $('pErr').textContent = '';
   } catch (err) { $('pErr').textContent = err.message; }
 };
-$('pRmImg').onclick = () => { imageData = ''; $('pPreview').hidden = true; };
+$('pRmImg').onclick = () => { imageData = ''; imgState = 'removed'; $('pPreview').hidden = true; };
 
 function shrink(file) {
   return new Promise((resolve, reject) => {
@@ -1213,6 +1356,7 @@ function shrink(file) {
 
 $('composerForm').onsubmit = e => {
   e.preventDefault();
+  if (editing) return saveEdit();
   const m = S.d.meta;
   const text = $('pText').value.trim();
   const name = S.teacher ? myName() : $('pName').value.trim();
