@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Class Board</title>
+<script>
+// ▼▼▼ Paste the STUDENT web app URL (ends in /exec) between the quotes ▼▼▼
+const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2SfhDK9bZrRd9FZEWYK6cbKyOQCqZDd_TiFb6wWOAB/exec';
+// ▲▲▲ That is the only line you ever need to edit in this file ▲▲▲
+</script>
 <style>
   :root {
     --bg: #f3f0e8; --surface: #fff; --ink: #22201b; --muted: #676255; --line: #dcd5c6;
@@ -318,20 +323,30 @@
 <script>
 /* Student page hosted outside Google. Talks to the Class Board app directly,
    without Google sign-in, so phones with several Google accounts work. */
-const API = 'https://script.google.com/macros/s/AKfycbw26pMux4MpEySQHKuiBHbk7NneH9sw-HKXCLwQCXHv75aBJlOrRYBV0rTlecOhNd0jLg/exec';
 (function () {
   function call(fn, args, ok, fail) {
+    if (API.indexOf('/exec') < 0) {
+      if (fail) fail(new Error('Falta l\'enllaç de l\'app a index.html'));
+      return;
+    }
     fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ fn: fn, args: args })
     })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        return r.text().then(function (t) {
+          try { return JSON.parse(t); }
+          catch (e) { throw new Error('Resposta inesperada de l\'app (comprova la implementació dels alumnes)'); }
+        });
+      })
       .then(function (j) {
         if (j.error) { if (fail) fail(new Error(j.error)); }
         else if (ok) ok(j.result);
       })
-      .catch(function () { if (fail) fail(new Error('No hi ha connexió. Torna-ho a provar.')); });
+      .catch(function (e) {
+        if (fail) fail(new Error(e && e.message && e.message.indexOf('Resposta') === 0 ? e.message : 'No hi ha connexió amb l\'app'));
+      });
   }
   function runner(ok, fail) {
     return new Proxy({}, { get: function (_, k) {
@@ -597,7 +612,7 @@ $('joinForm').onsubmit = e => {
   go({ b: code });
 };
 
-function showMsg(kind) {
+function showMsg(kind, detail) {
   show('msg');
   const texts = {
     notfound: ['No hem trobat el tauler', 'Comprova el codi o l\'enllaç.'],
@@ -607,7 +622,7 @@ function showMsg(kind) {
   const t = texts[kind] || texts.error;
   setTitle(t[0]);
   $('msgTitle').textContent = t[0];
-  $('msgText').textContent = t[1];
+  $('msgText').textContent = detail ? t[1] + ' (' + detail + ')' : t[1];
   $('msgBtn').textContent = S.me ? 'Torna als meus taulers' : 'Prova un altre codi';
 }
 $('msgBtn').onclick = () => go({});
@@ -628,7 +643,7 @@ function openBoard(code) {
       applyData(d);
       startPoll();
     })
-    .catch(() => { if (S.id === code) showMsg('error'); });
+    .catch(e => { if (S.id === code) showMsg('error', errText(e)); });
 }
 
 function applyData(d) {
