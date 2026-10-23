@@ -6,7 +6,7 @@
 <title>Class Board</title>
 <script>
 // ▼▼▼ Paste the STUDENT web app URL (ends in /exec) between the quotes ▼▼▼
-const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2SfhDK9bZrRd9FZEWYK6cbKyOQCqZDd_TiFb6wWOAB/exechttps://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2SfhDK9bZrRd9FZEWYK6cbKyOQCqZDd_TiFb6wWOAB/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwgmphZaiDPnt-Zghyxov5_DDtZmpy_6NTP9XUgJXcMjJ63X6cbtxRqgxik2Jf5zf_n/exec';
 // ▲▲▲ That is the only line you ever need to edit in this file ▲▲▲
 </script>
 <style>
@@ -14,23 +14,29 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
     --bg: #f3f0e8; --surface: #fff; --ink: #22201b; --muted: #676255; --line: #dcd5c6;
     --accent: #2f5d50; --accent-soft: #e3ece8; --danger: #a3261b;
     --yellow: #ffe98c; --pink: #ffc6d3; --blue: #b9daff; --green: #c2eab9; --purple: #dacaff;
+    --wall-ink: var(--ink); --wall-muted: var(--muted); --hdr-bg: rgba(255,255,255,.72); --hdr-ink: var(--ink);
+    --col-bg: rgba(34,32,27,.07);
   }
+  body.dark { --wall-ink: #fff; --wall-muted: rgba(255,255,255,.8); --hdr-bg: rgba(12,12,18,.45); --hdr-ink: #fff; --col-bg: rgba(255,255,255,.13); }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body { background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          -webkit-tap-highlight-color: transparent; }
+  body.noscroll { overflow: hidden; }
   button, input, textarea, select { font: inherit; color: inherit; }
   button { cursor: pointer; }
   [hidden] { display: none !important; }
   :focus-visible { outline: 3px solid #1f6feb; outline-offset: 2px; }
+  #bgLayer { position: fixed; inset: 0; z-index: -1; background: var(--bg); }
 
   /* ---------- header ---------- */
   header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-           padding: 10px 16px; background: rgba(243,240,232,.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+           padding: 10px 16px; background: var(--hdr-bg); color: var(--hdr-ink); backdrop-filter: blur(8px);
+           -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid rgba(0,0,0,.08); }
   header h1 { margin: 0; font-size: 1.15rem; flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #status { font-size: .8rem; color: var(--muted); }
+  #status { font-size: .8rem; opacity: .8; }
   .tools { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 11px; font-size: .92rem; white-space: nowrap; }
+  .tbtn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 7px 11px; font-size: .92rem; white-space: nowrap; }
   .tbtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
   @media (max-width: 640px) { .lbl { display: none; } }
 
@@ -63,22 +69,24 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
               border: 2px solid var(--line); border-radius: 12px; padding: 10px; margin: 14px 0; }
 
   /* ---------- board ---------- */
-  .banner { background: var(--accent-soft); border-radius: 10px; padding: 9px 13px; margin-bottom: 14px; font-size: .92rem; }
+  .banner { background: rgba(255,255,255,.92); border-radius: 10px; padding: 9px 13px; margin-bottom: 14px; font-size: .92rem; color: var(--ink); }
   #wall.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; align-items: start; }
   #wall.columns { display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 8px; }
-  .col { flex: 0 0 min(300px, 85vw); background: rgba(34,32,27,.06); border-radius: 14px; padding: 10px; }
+  .col { flex: 0 0 min(300px, 85vw); background: var(--col-bg); border-radius: 14px; padding: 10px; }
   .col-head { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; }
-  .col-head h2 { flex: 1; margin: 0 4px; font-size: 1.02rem; overflow-wrap: anywhere; }
-  .ibtn { border: 0; background: rgba(255,255,255,.75); border-radius: 7px; min-width: 32px; height: 32px; color: var(--muted); }
+  .col-head h2 { flex: 1; margin: 0 4px; font-size: 1.02rem; overflow-wrap: anywhere; color: var(--wall-ink); }
+  .ibtn { border: 0; background: rgba(255,255,255,.8); border-radius: 7px; min-width: 32px; height: 32px; color: var(--muted); }
   .col-body { display: flex; flex-direction: column; gap: 12px; min-height: 60px; }
-  .col-add { display: block; width: 100%; margin-top: 10px; border: 2px dashed var(--line); background: transparent;
-             border-radius: 10px; padding: 10px; color: var(--muted); }
-  #empty { color: var(--muted); }
+  .col-add { display: block; width: 100%; margin-top: 10px; border: 2px dashed rgba(127,127,127,.45); background: transparent;
+             border-radius: 10px; padding: 10px; color: var(--wall-muted); }
+  #empty { color: var(--wall-muted); }
 
-  .card { border-radius: 12px; padding: 12px 14px; position: relative;
-          box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.05); }
+  .card { border-radius: 12px; padding: 12px 14px; position: relative; color: var(--ink);
+          box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+          content-visibility: auto; contain-intrinsic-size: auto 220px; }
+  .slot { display: contents; }
   .card.pending { outline: 2px dashed rgba(34,32,27,.35); outline-offset: -2px; }
-  .card.sending { opacity: .7; }
+  .card.sending { opacity: .75; }
   .card-top { display: flex; align-items: center; gap: 6px; margin: -4px -6px 6px -4px; min-height: 28px; }
   .card-top .grow { flex: 1; }
   .handle { border: 0; background: rgba(255,255,255,.65); border-radius: 8px; padding: 4px 10px; font-size: .85rem;
@@ -86,9 +94,22 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   .chip { font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.7); color: var(--muted); }
   .chip.teacher { background: var(--accent); color: #fff; }
   .x { border: 0; background: rgba(255,255,255,.75); border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; line-height: 1; }
-  .card img { display: block; width: 100%; border-radius: 8px; margin-bottom: 8px; cursor: zoom-in; background: rgba(0,0,0,.05); min-height: 60px; }
+  .card img.pic { display: block; width: 100%; height: auto; border-radius: 8px; margin-bottom: 8px; cursor: zoom-in;
+                  background: rgba(0,0,0,.06); min-height: 60px; }
   .card .text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.05rem; }
   .card .meta { margin-top: 8px; font-size: .8rem; color: var(--muted); }
+  .media { margin-bottom: 8px; }
+  .media audio { width: 100%; display: block; }
+  .media .dur { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .vid { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #1d1d22 center/cover no-repeat; }
+  .vid video, .vid iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+  .vid .play { position: absolute; inset: 0; border: 0; background: rgba(0,0,0,.25); color: #fff; font-size: 2.6rem;
+               display: flex; align-items: center; justify-content: center; }
+  .vid .play span { width: 72px; height: 72px; border-radius: 50%; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding-left: 6px; }
+  .vid .dur { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,.6); color: #fff; font-size: .78rem; padding: 2px 7px; border-radius: 6px; }
+  .media .fallback { font-size: .85rem; }
+  .bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.12); overflow: hidden; margin-top: 6px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
   .approve { display: flex; gap: 8px; margin-top: 10px; }
   .approve button { flex: 1; border: 0; border-radius: 8px; padding: 7px; font-weight: 600; }
   .approve .yes { background: var(--accent); color: #fff; }
@@ -109,8 +130,8 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   .cmt-form button { border: 0; background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 600; }
   .cmt-form .plain-btn { background: rgba(255,255,255,.85); color: var(--ink); }
 
-  .card.dragging { position: fixed; z-index: 20; pointer-events: none; transform: rotate(2deg); box-shadow: 0 14px 34px rgba(0,0,0,.3); }
-  .placeholder { border: 3px dashed var(--accent); border-radius: 12px; background: rgba(47,93,80,.08); }
+  .card.dragging { position: fixed; z-index: 20; pointer-events: none; transform: rotate(2deg); box-shadow: 0 14px 34px rgba(0,0,0,.3); content-visibility: visible; }
+  .placeholder { border: 3px dashed var(--accent); border-radius: 12px; background: rgba(47,93,80,.12); }
   body.is-dragging { user-select: none; cursor: grabbing; }
 
   .yellow { background: var(--yellow); } .pink { background: var(--pink); } .blue { background: var(--blue); }
@@ -123,27 +144,35 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   .overlay { position: fixed; inset: 0; z-index: 10; background: rgba(20,18,14,.55); display: none;
              align-items: center; justify-content: center; padding: 16px; }
   .overlay.open { display: flex; }
-  .sheet { background: var(--surface); border-radius: 16px; width: 100%; max-width: 480px; max-height: 92vh; overflow: auto; padding: 18px; }
+  .sheet { background: var(--surface); color: var(--ink); border-radius: 16px; width: 100%; max-width: 480px; max-height: 92vh; overflow: auto; padding: 18px; }
   .sheet h2 { margin: 0 0 14px; font-size: 1.15rem; }
   .field { display: block; margin-bottom: 12px; }
   .field > span { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 5px; }
   .sheet input[type=text], .sheet textarea, .sheet select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; }
   .sheet textarea { min-height: 110px; resize: vertical; }
   #pText { transition: background-color .15s; }
-  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .swatches { display: flex; gap: 12px; flex-wrap: wrap; }
   .swatch { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(34,32,27,.25); padding: 0;
             display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: var(--ink); }
   .swatch[aria-pressed=true] { border: 3px solid var(--ink); box-shadow: 0 0 0 3px #fff inset; }
   .note { font-size: .82rem; color: var(--muted); margin: 10px 0 4px; }
-  #pPreview { position: relative; margin-bottom: 10px; }
-  #pPreview img { width: 100%; border-radius: 10px; display: block; }
-  #pPreview button { position: absolute; top: 6px; right: 6px; }
+  #pAttach { position: relative; margin-bottom: 10px; }
+  #pAttach img, #pAttach video { width: 100%; border-radius: 10px; display: block; max-height: 45vh; object-fit: contain; background: #111; }
+  #pAttach audio { width: 100%; display: block; }
+  #pAttach .rm { position: absolute; top: 6px; right: 6px; }
+  #pAttach.audio .rm { position: static; margin-top: 6px; }
+  .attach-btns .tbtn { padding: 10px 12px; }
+  #pRec { border: 2px solid #c0213f; border-radius: 12px; padding: 10px; margin-bottom: 10px; text-align: center; }
+  #pRec video { width: 100%; max-height: 40vh; border-radius: 8px; background: #111; display: block; margin-bottom: 8px; transform: scaleX(-1); }
+  .recdot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #c0213f; margin-right: 6px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
   .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
   .btn { border: 0; border-radius: 10px; padding: 11px 18px; font-weight: 600; }
   .btn.primary { background: var(--accent); color: #fff; } .btn.primary:disabled { opacity: .55; }
   .btn.plain { background: #eee9df; }
   .btn.danger { background: #fbe9e7; color: var(--danger); }
+  .btn.rec { background: #c0213f; color: #fff; }
   .err { color: var(--danger); font-size: .9rem; min-height: 1.2em; margin-top: 6px; }
   .types { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .types button { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 12px; text-align: left; }
@@ -155,22 +184,56 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   .toggle b { display: block; }
   .toggle small { color: var(--muted); }
   .danger-zone { border-top: 1px solid #eee8dc; margin-top: 12px; padding-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .bggroup { font-size: .78rem; color: var(--muted); margin: 8px 0 4px; }
+  .bgtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 8px; }
+  .bgtile { height: 44px; border-radius: 9px; border: 2px solid rgba(0,0,0,.12); padding: 0; background-size: cover !important;
+            background-position: center bottom !important; font-size: 1.1rem; }
+  .bgtile[aria-pressed=true] { border: 3px solid var(--accent); box-shadow: 0 0 0 2px #fff inset; }
 
   #lightbox img { max-width: 100%; max-height: 90vh; border-radius: 8px; }
   #present { background: #fff; }
   #present .inner { text-align: center; max-width: 900px; width: 100%; }
   #present h2 { font-size: clamp(1.4rem, 4vw, 2.4rem); margin: 0 0 12px; overflow-wrap: anywhere; }
-  #qr { display: inline-block; padding: 12px; background: #fff; }
-  #qr img, #qr canvas { display: block; }
+  .qr { display: inline-block; padding: 12px; background: #fff; border-radius: 10px; color: #22201b; font-size: .8rem; word-break: break-all; max-width: 90vw; }
+  .qr img, .qr canvas { display: block; }
   .bigcode { font-size: clamp(1.6rem, 6vw, 3.2rem); font-weight: 700; letter-spacing: .2em; margin: 8px 0; }
   #closePresent { position: absolute; top: 14px; right: 14px; }
 
-  #toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 30; background: #22201b; color: #fff;
+  /* ---------- slideshow ---------- */
+  #slides { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; color: var(--wall-ink); overflow: hidden; }
+  #slBg { position: absolute; inset: 0; z-index: -1; }
+  #slStage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 4vh 5vw 2vh; }
+  .sl-title { text-align: center; width: 100%; }
+  .sl-title h2 { font-size: clamp(32px, 6.5vw, 96px); line-height: 1.05; margin: 0 0 3vh; overflow-wrap: anywhere; }
+  .sl-title .sub { font-size: clamp(16px, 2vw, 26px); opacity: .85; margin-bottom: 2vh; }
+  .sl-title .bigcode { margin-top: 1vh; }
+  .sl-post { width: 100%; height: 100%; display: grid; grid-template-columns: 1fr; align-items: center; gap: 4vw; }
+  .sl-post.has-media { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+  .sl-col { font-size: clamp(14px, 1.4vw, 20px); text-transform: uppercase; letter-spacing: .08em; opacity: .75; margin-bottom: 1vh; }
+  .sl-name { font-size: clamp(26px, 3.6vw, 58px); font-weight: 700; color: #c4512a; margin: 0 0 2vh; line-height: 1.1; overflow-wrap: anywhere; }
+  body.dark .sl-name, #slides.dark .sl-name { color: #ffad73; }
+  .sl-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.35; max-height: 70vh; overflow: auto; }
+  .sl-media { height: 100%; max-height: 78vh; display: flex; align-items: center; justify-content: center; min-height: 0; }
+  .sl-media img { max-width: 100%; max-height: 78vh; object-fit: contain; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  .sl-media audio { width: 100%; }
+  .sl-media .vid { max-height: 78vh; }
+  @media (max-aspect-ratio: 4/5) {
+    .sl-post.has-media { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+    .sl-post.has-media .sl-media { order: -1; max-height: 42vh; }
+    .sl-media img { max-height: 42vh; }
+  }
+  .sl-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; }
+  .sl-bar .grow { flex: 1; }
+  .sl-bar button { border: 0; background: rgba(0,0,0,.35); color: #fff; border-radius: 10px; min-width: 44px; height: 44px; font-size: 1.1rem; padding: 0 14px; }
+  #slCount { font-variant-numeric: tabular-nums; background: rgba(0,0,0,.35); color: #fff; border-radius: 10px; padding: 10px 14px; }
+
+  #toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 50; background: #22201b; color: #fff;
            padding: 10px 16px; border-radius: 10px; font-size: .92rem; max-width: calc(100% - 32px); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
   #toast.bad { background: var(--danger); }
 </style>
 </head>
 <body>
+<div id="bgLayer"></div>
 <header>
   <button class="tbtn" id="backBtn" hidden>← <span class="lbl">Els meus taulers</span></button>
   <h1 id="title">Class Board</h1>
@@ -178,7 +241,8 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   <div class="tools" id="tools" hidden>
     <button class="tbtn" id="addColBtn" hidden>+ <span class="lbl">Columna</span></button>
     <button class="tbtn" id="settingsBtn">⚙ <span class="lbl">Configuració</span></button>
-    <button class="tbtn primary" id="presentBtn">Presenta</button>
+    <button class="tbtn" id="presentBtn">QR <span class="lbl">· Codi</span></button>
+    <button class="tbtn primary" id="slidesBtn">▶ <span class="lbl">Presentació</span></button>
   </div>
 </header>
 
@@ -230,19 +294,29 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
 
 <button id="fab" hidden>+ Publica</button>
 
-<!-- New post -->
+<!-- New / edit post -->
 <div class="overlay" id="composer">
   <form class="sheet" id="composerForm">
     <h2 id="pTitle">Nova publicació</h2>
     <label class="field" id="pColWrap" hidden><span>Columna</span><select id="pCol"></select></label>
-    <label class="field"><span id="pNameLabel">El teu nom (opcional)</span>
+    <label class="field" id="pNameWrap"><span id="pNameLabel">El teu nom (opcional)</span>
       <input type="text" id="pName" maxlength="40" autocomplete="off"></label>
     <label class="field"><span>Publicació</span>
       <textarea id="pText" maxlength="1000" placeholder="Què vols compartir?"></textarea></label>
-    <div id="pPreview" hidden><img alt="Foto seleccionada"><button type="button" class="tbtn" id="pRmImg">Treu la foto</button></div>
-    <div class="row" style="margin-bottom:14px">
-      <label class="tbtn" for="pFile" style="padding:10px 14px">📷 Afegeix una foto</label>
-      <input type="file" id="pFile" accept="image/*" hidden>
+    <div id="pRec" hidden>
+      <video id="recVideo" muted playsinline hidden></video>
+      <div><span class="recdot"></span><b id="recTime">0:00</b> <span class="muted" id="recMax"></span></div>
+      <div class="row" style="justify-content:center;margin-top:8px">
+        <button type="button" class="btn rec" id="recStop">⏹ Atura</button>
+        <button type="button" class="btn plain" id="recCancel">Cancel·la</button>
+      </div>
+    </div>
+    <div id="pAttach" hidden></div>
+    <div class="row attach-btns" id="pAttachBtns" style="margin-bottom:14px">
+      <label class="tbtn" for="pFile">📎 Foto, vídeo o àudio</label>
+      <input type="file" id="pFile" accept="image/*,video/*,audio/*" hidden>
+      <button type="button" class="tbtn" id="recAudioBtn">🎤 Grava àudio</button>
+      <button type="button" class="tbtn" id="recVideoBtn">🎥 Grava vídeo</button>
     </div>
     <div class="field"><span>Color de la nota</span><div class="swatches" id="swatches" role="group" aria-label="Color de la nota"></div></div>
     <div class="note">No publiquis dades personals ni fotos de persones.</div>
@@ -286,6 +360,8 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
         <button type="button" data-type="columns"><b>Columnes</b><small>Per columnes</small></button>
       </div>
     </div>
+    <div class="field"><span>Fons</span><div id="bgPicker"></div>
+      <input type="file" id="bgFile" accept="image/*" hidden></div>
     <label class="toggle"><input type="checkbox" id="sLocked"><span><b>Tancat</b><small>Els alumnes no poden publicar ni comentar.</small></span></label>
     <label class="toggle"><input type="checkbox" id="sApproval"><span><b>Aprovació prèvia</b><small>Les publicacions i els comentaris dels alumnes no es mostren fins que els aproves.</small></span></label>
     <label class="toggle"><input type="checkbox" id="sNameReq"><span><b>Nom obligatori</b><small>Els alumnes han d'escriure el seu nom.</small></span></label>
@@ -302,12 +378,12 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   </form>
 </div>
 
-<!-- Present (QR + code) -->
+<!-- QR + code -->
 <div class="overlay" id="present">
   <button class="tbtn" id="closePresent">✕ Tanca</button>
   <div class="inner">
     <h2 id="prTitle"></h2>
-    <div id="qr"></div>
+    <div class="qr" id="qr"></div>
     <div class="muted">Escaneja el codi QR o entra amb el codi</div>
     <div class="bigcode" id="prCode"></div>
     <div class="muted" id="prUrl" style="font-size:.75rem;word-break:break-all;margin:6px auto 12px;max-width:600px"></div>
@@ -315,6 +391,20 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
       <button class="tbtn" id="copyLink">Copia l'enllaç</button>
       <button class="tbtn" id="copyJoin">Copia l'enllaç per entrar amb codi</button>
     </div>
+  </div>
+</div>
+
+<!-- Slideshow -->
+<div id="slides" hidden>
+  <div id="slBg"></div>
+  <div id="slStage"></div>
+  <div class="sl-bar">
+    <button type="button" id="slPrev" aria-label="Anterior">‹</button>
+    <span id="slCount"></span>
+    <button type="button" id="slNext" aria-label="Següent">›</button>
+    <span class="grow"></span>
+    <button type="button" id="slFull" aria-label="Pantalla completa">⛶</button>
+    <button type="button" id="slClose" aria-label="Surt">✕</button>
   </div>
 </div>
 
@@ -375,7 +465,6 @@ const API = 'https://script.google.com/macros/s/AKfycbwbmj1fpsupHLPefb_VaLrjpz2S
   } };
 })();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const BOOT = (function () {
   const b = (new URLSearchParams(location.search).get('b') || '').toUpperCase();
@@ -388,6 +477,7 @@ const COLORS = [
   { k: 'green', n: 'Verd' }, { k: 'purple', n: 'Lila' }
 ];
 const COLOR_KEYS = COLORS.map(c => c.k);
+const MAX_MEDIA = 20 * 1024 * 1024;
 
 /* ---------- small helpers ---------- */
 const store = {
@@ -436,33 +526,150 @@ function when(t) {
   const hm = d.toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' });
   return d.toDateString() === now.toDateString() ? hm : d.toLocaleDateString('ca-ES', { day: 'numeric', month: 'numeric' }) + ' ' + hm;
 }
+function mmss(s) { s = Math.round(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function open(id) { $(id).classList.add('open'); }
 function close(id) { $(id).classList.remove('open'); }
+function thumb(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
+function driveFile(id) { return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id); }
+function drivePreview(id) { return 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview'; }
+function driveView(id) { return 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/view'; }
 
 /* ---------- per-device state ---------- */
 let DEVICE = store.get('device', '');
 if (!DEVICE) { DEVICE = rid(24); store.set('device', DEVICE); }
-const TOK = store.get('tok', {});     // itemId -> secret key (lets this device delete its own items)
+const TOK = store.get('tok', {});     // itemId -> secret key (lets this device change its own items)
 const LIKED = store.get('liked', {}); // postId -> 1
 const PEND = store.get('pend', {});   // itemId -> {b, kind, item}  my items waiting for approval
 function saveTok() { store.set('tok', TOK); }
 function savePend() { store.set('pend', PEND); }
 
 /* ---------- app state ---------- */
-const S = {
-  me: BOOT.me,
-  view: '',
-  id: '',
-  v: '',
-  d: null,          // board payload {meta, posts, comments, pend, teacher}
-  teacher: false
-};
+const S = { me: BOOT.me, view: '', id: '', v: '', d: null, teacher: false };
 let busy = 0;                 // writes in flight (polling waits for them)
 let drag = null;
 const openComments = {};      // postId -> true
-const drafts = {};            // postId -> comment draft
-const imgCache = {};          // imgId -> data URL (local uploads and private images)
-const imgEls = {};            // imgId -> <img> reused between renders
+const drafts = {};            // comment drafts
+const imgCache = {};          // fileId -> data URL or local object URL (own uploads, private images)
+const imgEls = {};            // fileId -> <img> reused between renders
+const mediaEls = {};          // fileId -> audio/video element reused between renders
+
+/* =================================================================
+   Backgrounds
+   ================================================================= */
+function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+function svgUrl(svg) { return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")'; }
+function sceneJungle() {
+  const r = rng(7), cols = ['#0a5a2c', '#0e6d35', '#178a3e', '#2b9a3a', '#4aa935', '#0c6431'];
+  let blades = '';
+  for (let layer = 0; layer < 2; layer++) {
+    for (let i = 0; i < 34; i++) {
+      const x = i * 50 + r() * 50 - 20, h = (layer ? 260 : 380) + r() * (layer ? 300 : 420), w = 70 + r() * 110, lean = (r() - .5) * 220;
+      const c = cols[Math.floor(r() * cols.length) + (layer ? 0 : 0)] ;
+      blades += '<path fill="' + c + '" opacity="' + (layer ? 1 : .7) + '" d="M' + (x - w / 2) + ' 900 Q' + (x - w / 5 + lean * .3) + ' ' + (900 - h * .55) + ' ' + (x + lean) + ' ' + (900 - h) +
+        ' Q' + (x + w / 5 + lean * .3) + ' ' + (900 - h * .55) + ' ' + (x + w / 2) + ' 900Z"/>';
+    }
+  }
+  return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><rect width="1600" height="900" fill="#08743a"/>' + blades + '</svg>');
+}
+function sceneMountains() {
+  return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcdcff"/><stop offset="1" stop-color="#fff2dc"/></linearGradient></defs>' +
+    '<rect width="1600" height="900" fill="url(#s)"/><circle cx="1220" cy="250" r="90" fill="#ffd27a"/>' +
+    '<path fill="#b4c8e2" d="M0 600 L220 380 L420 560 L640 320 L900 580 L1120 360 L1360 560 L1600 400 L1600 900 L0 900Z"/>' +
+    '<path fill="#8aa7cf" d="M0 700 L260 500 L520 690 L780 470 L1040 700 L1300 520 L1600 690 L1600 900 L0 900Z"/>' +
+    '<path fill="#6587b6" d="M0 820 L300 640 L600 800 L900 620 L1200 810 L1450 680 L1600 760 L1600 900 L0 900Z"/></svg>');
+}
+function sceneSea() {
+  const wave = (y, a, c) => {
+    let d = 'M0 ' + y;
+    for (let x = 0; x <= 1600; x += 100) d += ' Q' + (x + 50) + ' ' + (y - a) + ' ' + (x + 100) + ' ' + y;
+    return '<path fill="' + c + '" d="' + d + ' L1600 900 L0 900Z"/>';
+  };
+  return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dff3ff"/><stop offset="1" stop-color="#fff5e6"/></linearGradient></defs>' +
+    '<rect width="1600" height="900" fill="url(#s)"/><circle cx="320" cy="230" r="80" fill="#ffd98a"/>' +
+    wave(620, 26, '#9fd6f0') + wave(700, 30, '#62b2dc') + wave(790, 34, '#3189c2') + '</svg>');
+}
+function sceneCity() {
+  const r = rng(3);
+  let stars = '', build = '', win = '';
+  for (let i = 0; i < 90; i++) stars += '<circle cx="' + (r() * 1600).toFixed(0) + '" cy="' + (r() * 520).toFixed(0) + '" r="' + (r() * 1.6 + .4).toFixed(1) + '" fill="#fff" opacity="' + (r() * .6 + .3).toFixed(2) + '"/>';
+  let x = 0;
+  while (x < 1600) {
+    const w = 60 + r() * 110, h = 160 + r() * 360;
+    build += '<rect x="' + x.toFixed(0) + '" y="' + (900 - h).toFixed(0) + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) + '" fill="#0b1130"/>';
+    for (let wy = 900 - h + 18; wy < 880; wy += 26) for (let wx = x + 10; wx < x + w - 14; wx += 20) {
+      if (r() < .32) win += '<rect x="' + wx.toFixed(0) + '" y="' + wy.toFixed(0) + '" width="8" height="12" fill="#ffd86b" opacity=".8"/>';
+    }
+    x += w + 4;
+  }
+  return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e1838"/><stop offset="1" stop-color="#2d3f74"/></linearGradient></defs>' +
+    '<rect width="1600" height="900" fill="url(#s)"/>' + stars + '<circle cx="1300" cy="160" r="54" fill="#f4f1de"/>' + build + win + '</svg>');
+}
+const BG_GROUPS = [
+  ['Colors', [
+    { k: '', n: 'Crema', css: '#f3f0e8' }, { k: 'white', n: 'Blanc', css: '#ffffff' },
+    { k: 'mist', n: 'Boira', css: '#e7ebef' }, { k: 'sky', n: 'Cel', css: '#d4e9ff' },
+    { k: 'mint', n: 'Menta', css: '#d2f0e1' }, { k: 'rose', n: 'Rosa', css: '#fde0e6' },
+    { k: 'lavender', n: 'Lavanda', css: '#e5defd' }, { k: 'sand', n: 'Sorra', css: '#f3e2c2' },
+    { k: 'navy', n: 'Blau nit', css: '#1e2a47', dark: 1 }, { k: 'forest', n: 'Bosc', css: '#1c4a37', dark: 1 },
+    { k: 'charcoal', n: 'Carbó', css: '#2a2b30', dark: 1 }, { k: 'wine', n: 'Granat', css: '#5b1f2c', dark: 1 }
+  ]],
+  ['Degradats', [
+    { k: 'sunset', n: 'Posta de sol', css: 'linear-gradient(135deg,#ffb199 0%,#ffd9a0 55%,#fff1c9 100%)' },
+    { k: 'peach', n: 'Préssec', css: 'linear-gradient(135deg,#ffecd2,#fcb69f)' },
+    { k: 'spring', n: 'Primavera', css: 'linear-gradient(135deg,#e2fbb4,#96e6a1)' },
+    { k: 'candy', n: 'Cotó de sucre', css: 'linear-gradient(135deg,#a1c4fd,#fbc2eb)' },
+    { k: 'ocean', n: 'Oceà', css: 'linear-gradient(135deg,#2b5876,#4e4376)', dark: 1 },
+    { k: 'aurora', n: 'Aurora', css: 'linear-gradient(160deg,#0f2027,#203a43 50%,#2c5364)', dark: 1 }
+  ]],
+  ['Textures', [
+    { k: 'dots', n: 'Punts', css: 'radial-gradient(#d3cab6 1.5px, transparent 1.7px) 0 0/22px 22px, #f6f3ec' },
+    { k: 'grid', n: 'Quadrícula', css: 'linear-gradient(#d9e3ee 1px, transparent 1px) 0 0/28px 28px, linear-gradient(90deg,#d9e3ee 1px, transparent 1px) 0 0/28px 28px, #f8fbff' },
+    { k: 'lined', n: 'Llibreta', css: 'linear-gradient(90deg, transparent 56px, #f2a3a3 56px, #f2a3a3 58px, transparent 58px), linear-gradient(#cfe0f2 1px, transparent 1px) 0 0/100% 30px, #fffdf6' },
+    { k: 'cork', n: 'Suro', css: 'radial-gradient(rgba(90,55,20,.28) 1px, transparent 1.6px) 0 0/9px 9px, radial-gradient(rgba(255,240,210,.35) 1px, transparent 1.6px) 4px 5px/11px 11px, #c79a62' },
+    { k: 'chalk', n: 'Pissarra', css: 'radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px) 0 0/7px 7px, #2f4a3a', dark: 1 }
+  ]],
+  ['Il·lustracions', [
+    { k: 'jungle', n: 'Selva', scene: sceneJungle, base: '#08743a', dark: 1 },
+    { k: 'mountains', n: 'Muntanyes', scene: sceneMountains, base: '#fff2dc' },
+    { k: 'sea', n: 'Mar', scene: sceneSea, base: '#fff5e6' },
+    { k: 'city', n: 'Ciutat de nit', scene: sceneCity, base: '#1d2a55', dark: 1 }
+  ]]
+];
+const BGS = {};
+BG_GROUPS.forEach(g => g[1].forEach(b => { BGS[b.k] = b; }));
+function bgCss(b) {
+  if (b.scene) { if (!b.css) b.css = b.scene() + ' center bottom/cover no-repeat, ' + b.base; return b.css; }
+  return b.css;
+}
+const bgProbing = {};
+// key: preset name or "photo:<id>"; dark: only used for photos.
+function applyBackground(key, dark) {
+  key = key || '';
+  let css, isDark;
+  if (key.indexOf('photo:') === 0) {
+    const id = key.slice(6);
+    const src = imgCache[id] || thumb(id, 1920);
+    css = 'center/cover no-repeat url("' + src + '"), #444';
+    isDark = !!dark;
+    if (!imgCache[id] && !bgProbing[id]) {
+      bgProbing[id] = true;
+      const probe = new Image();
+      probe.onerror = () => run('getImage', S.id, id).then(d => {
+        imgCache[id] = d;
+        if (S.d && S.d.meta.bg === key) applyBackground(key, dark);
+      }).catch(() => {});
+      probe.src = src;
+    }
+  } else {
+    const b = BGS[key] || BGS[''];
+    css = bgCss(b);
+    isDark = !!b.dark;
+  }
+  $('bgLayer').style.background = css;
+  $('slBg').style.background = css;
+  document.body.classList.toggle('dark', isDark);
+  $('slides').classList.toggle('dark', isDark);
+}
 
 /* =================================================================
    Navigation
@@ -474,7 +681,7 @@ function show(view) {
   $('tools').hidden = !(inBoard && S.teacher);
   $('backBtn').hidden = !S.me || view === 'home';
   $('fab').hidden = true;
-  if (!inBoard) { stopPoll(); setStatus(''); }
+  if (!inBoard) { stopPoll(); setStatus(''); applyBackground(''); closeSlides(); }
   if (view === 'home') setTitle('Els meus taulers');
   if (view === 'join') setTitle('Class Board');
 }
@@ -552,17 +759,12 @@ function setBoardStatus(b, status) {
   run('setBoardStatus', b.id, status).catch(e => { toast(errText(e), true); loadHome(); });
 }
 function removeBoard(b) {
-  if (!confirm('Vols eliminar el tauler «' + b.title + '»? S\'esborraran totes les publicacions i fotos. No es pot desfer.')) return;
+  if (!confirm('Vols eliminar el tauler «' + b.title + '»? S\'esborraran totes les publicacions i fitxers. No es pot desfer.')) return;
   HOME.boards = HOME.boards.filter(x => x !== b);
   renderHome(HOME);
   run('deleteBoard', b.id).then(() => toast('Tauler eliminat.')).catch(e => { toast(errText(e), true); loadHome(); });
 }
-function setHomeTab(t) {
-  homeTab = t;
-  $('tabActive').classList.toggle('on', t === 'actiu');
-  $('tabArchived').classList.toggle('on', t === 'arxivat');
-  renderHome(HOME);
-}
+function setHomeTab(t) { homeTab = t; renderHome(HOME); }
 $('tabActive').onclick = () => setHomeTab('actiu');
 $('tabArchived').onclick = () => setHomeTab('arxivat');
 $('allBoards').onchange = () => { $('boardList').textContent = 'Carregant…'; loadHome(); };
@@ -596,7 +798,7 @@ $('newBoardForm').onsubmit = e => {
 };
 
 /* =================================================================
-   Join (students without a QR code)
+   Join (students without a QR code) and messages
    ================================================================= */
 function showJoin() {
   show('join');
@@ -629,13 +831,14 @@ function showMsg(kind, detail) {
 $('msgBtn').onclick = () => go({});
 
 /* =================================================================
-   Board
+   Board data
    ================================================================= */
 function openBoard(code) {
   S.id = code; S.v = ''; S.d = null; S.teacher = false;
+  resetWall();
   show('board');
   setTitle('Carregant…');
-  $('wall').textContent = ''; $('banner').hidden = true; $('empty').hidden = true;
+  $('banner').hidden = true; $('empty').hidden = true;
   run('poll', code, '')
     .then(json => {
       if (S.id !== code) return;
@@ -647,13 +850,33 @@ function openBoard(code) {
     .catch(e => { if (S.id === code) showMsg('error', errText(e)); });
 }
 
+// Apply a full board or only the changes ({delta: true}) from the server.
 function applyData(d) {
+  if (d.delta && S.d) {
+    const cur = S.d;
+    const gone = {};
+    (d.gone || []).forEach(id => { gone[id] = 1; });
+    const np = {}, nc = {};
+    d.posts.forEach(p => { np[p.id] = 1; });
+    d.comments.forEach(c => { nc[c.id] = 1; });
+    cur.posts = cur.posts.filter(p => !gone[p.id] && !np[p.id]).concat(d.posts);
+    cur.comments = cur.comments.filter(c => !gone[c.id] && !nc[c.id]).concat(d.comments);
+    if (d.meta) cur.meta = d.meta;
+    cur.pend = d.pend;
+    cur.teacher = d.teacher;
+  } else {
+    // Keep my own posts that are still being uploaded.
+    const sending = S.d ? S.d.posts.filter(p => p.sending && !d.posts.some(x => x.id === p.id)) : [];
+    S.d = d;
+    S.d.posts = d.posts.concat(sending);
+  }
+  S.d.posts.sort((a, b) => a.order - b.order);
+  S.d.comments.sort((a, b) => a.time - b.time);
   S.v = d.v;
-  S.d = d;
-  S.teacher = d.teacher;
+  S.teacher = S.d.teacher;
   // Forget my pending items once they're approved or rejected.
   const stillPending = {};
-  (d.pend || []).forEach(id => { stillPending[id] = true; });
+  (S.d.pend || []).forEach(id => { stillPending[id] = true; });
   let changed = false;
   Object.keys(PEND).forEach(id => {
     if (PEND[id].b === S.id && !stillPending[id]) { delete PEND[id]; changed = true; }
@@ -697,19 +920,6 @@ function poll() {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && S.view === 'board') { lastChange = Date.now(); pollSoon(); }
 });
-// If someone is typing a comment when the board refreshes, put the cursor back where it was.
-function rememberFocus() {
-  const a = document.activeElement;
-  if (!a || !a.classList || !a.classList.contains('cmt-input')) return null;
-  return { post: a.dataset.post, kind: a.dataset.kind, start: a.selectionStart, end: a.selectionEnd };
-}
-function restoreFocus(f) {
-  if (!f) return;
-  const i = document.querySelector('.cmt-input[data-post="' + f.post + '"][data-kind="' + f.kind + '"]');
-  if (!i) return;
-  i.focus({ preventScroll: true });
-  try { i.setSelectionRange(f.start, f.end); } catch (e) {}
-}
 
 // Every change is shown immediately, then saved. Polling pauses until the save finishes.
 function write(promise, onOk) {
@@ -719,7 +929,10 @@ function write(promise, onOk) {
     .catch(e => { busy--; toast(errText(e), true); S.v = ''; pollSoon(); });
 }
 
-/* ---------- rendering ---------- */
+/* =================================================================
+   Rendering. Only cards that changed are rebuilt, and cards are only
+   moved when their position changes, so playing audio/video keeps playing.
+   ================================================================= */
 function isColumns() { return S.d && S.d.meta.type === 'columns'; }
 function visibleColumns() {
   const cols = S.d.meta.columns || [];
@@ -748,11 +961,36 @@ function commentsFor(postId) {
   return list;
 }
 
+// If someone is typing a comment when the board refreshes, put the cursor back where it was.
+function rememberFocus() {
+  const a = document.activeElement;
+  if (!a || !a.classList || !a.classList.contains('cmt-input')) return null;
+  return { post: a.dataset.post, kind: a.dataset.kind, start: a.selectionStart, end: a.selectionEnd };
+}
+function restoreFocus(f) {
+  if (!f) return;
+  const i = document.querySelector('.cmt-input[data-post="' + f.post + '"][data-kind="' + f.kind + '"]');
+  if (!i || i === document.activeElement) return;
+  i.focus({ preventScroll: true });
+  try { i.setSelectionRange(f.start, f.end); } catch (e) {}
+}
+
+let cardEls = {};        // postId -> {el, sig, mk, slots}
+let layoutSig = '';
+let renderWaiting = false;
+function resetWall() {
+  $('wall').textContent = '';
+  cardEls = {};
+  layoutSig = '';
+}
+
 function render() {
   if (!S.d) return;
+  if (drag) { renderWaiting = true; return; }
   const focus = rememberFocus();
   renderBoard();
   restoreFocus(focus);
+  updateSlides();
 }
 
 function renderBoard() {
@@ -761,6 +999,7 @@ function renderBoard() {
   $('tools').hidden = !T;
   $('addColBtn').hidden = !(T && m.type === 'columns');
   $('fab').hidden = m.locked && !T;
+  if (!settingsOpen) applyBackground(m.bg, m.bgDark);
 
   const notes = [];
   if (m.status === 'arxivat') notes.push('Aquest tauler està arxivat: només tu el pots veure.');
@@ -774,49 +1013,104 @@ function renderBoard() {
   $('banner').textContent = notes.join(' ');
 
   const wall = $('wall');
-  const scrollX = wall.scrollLeft;
-  wall.textContent = '';
   const posts = postsToShow();
-
-  if (m.type !== 'columns') {
-    wall.className = 'grid';
-    $('empty').hidden = posts.length > 0;
-    posts.forEach(p => wall.appendChild(makeCard(p)));
-    return;
+  const cols = m.type === 'columns' ? visibleColumns() : null;
+  const lsig = JSON.stringify([m.type, cols, T && m.columns.length, m.locked || T]);
+  if (lsig !== layoutSig) {
+    layoutSig = lsig;
+    const scrollX = wall.scrollLeft;
+    wall.textContent = '';   // cards are kept in cardEls and put back below
+    if (cols) {
+      wall.className = 'columns';
+      cols.forEach((c, i) => {
+        const col = el('section', 'col');
+        const head = el('div', 'col-head');
+        head.appendChild(el('h2', '', c.name));
+        if (T && m.columns.length) {
+          head.appendChild(btn('ibtn', '←', 'Mou a l\'esquerra', () => moveColumn(i, -1)));
+          head.appendChild(btn('ibtn', '→', 'Mou a la dreta', () => moveColumn(i, 1)));
+          head.appendChild(btn('ibtn', '✎', 'Canvia el nom', () => renameColumn(i)));
+          head.appendChild(btn('ibtn', '✕', 'Elimina la columna', () => deleteColumn(i)));
+        }
+        col.appendChild(head);
+        const body = el('div', 'col-body');
+        body.dataset.col = c.id;
+        col.appendChild(body);
+        if (!m.locked || T) col.appendChild(btn('col-add', '+ Afegeix', '', () => openComposer(c.id)));
+        wall.appendChild(col);
+      });
+      wall.scrollLeft = scrollX;
+    } else {
+      wall.className = 'grid';
+    }
   }
 
-  wall.className = 'columns';
-  $('empty').hidden = true;
-  const cols = visibleColumns();
-  const known = {};
-  cols.forEach(c => { known[c.id] = true; });
-  cols.forEach((c, i) => {
-    const col = el('section', 'col');
-    const head = el('div', 'col-head');
-    head.appendChild(el('h2', '', c.name));
-    if (T && m.columns.length) {
-      head.appendChild(btn('ibtn', '←', 'Mou a l\'esquerra', () => moveColumn(i, -1)));
-      head.appendChild(btn('ibtn', '→', 'Mou a la dreta', () => moveColumn(i, 1)));
-      head.appendChild(btn('ibtn', '✎', 'Canvia el nom', () => renameColumn(i)));
-      head.appendChild(btn('ibtn', '✕', 'Elimina la columna', () => deleteColumn(i)));
-    }
-    col.appendChild(head);
-    const body = el('div', 'col-body');
-    body.dataset.col = c.id;
-    posts.filter(p => (known[p.col] ? p.col : cols[0].id) === c.id).forEach(p => body.appendChild(makeCard(p)));
-    col.appendChild(body);
-    if (!m.locked || T) col.appendChild(btn('col-add', '+ Afegeix', '', () => openComposer(c.id)));
-    wall.appendChild(col);
+  const seen = {};
+  const hasName = !!store.get('name', '');
+  if (cols) {
+    const known = {};
+    cols.forEach(c => { known[c.id] = true; });
+    const bodies = wall.querySelectorAll('.col-body');
+    cols.forEach((c, i) => {
+      const nodes = posts.filter(p => (known[p.col] ? p.col : cols[0].id) === c.id)
+        .map(p => { seen[p.id] = 1; return cardFor(p, hasName); });
+      place(bodies[i], nodes);
+    });
+    $('empty').hidden = true;
+  } else {
+    place(wall, posts.map(p => { seen[p.id] = 1; return cardFor(p, hasName); }));
+    $('empty').hidden = posts.length > 0;
+  }
+  Object.keys(cardEls).forEach(id => {
+    if (!seen[id]) { cardEls[id].el.remove(); delete cardEls[id]; }
   });
-  wall.scrollLeft = scrollX;
 }
 
-function makeCard(p) {
+// Put nodes into box in this order, moving only the ones that are out of place.
+function place(box, nodes) {
+  let ref = box.firstChild;
+  nodes.forEach(n => {
+    if (n === ref) ref = ref.nextSibling;
+    else box.insertBefore(n, ref);
+  });
+}
+
+function cardFor(p, hasName) {
+  const comments = commentsFor(p.id);
+  const sig = cardSig(p, comments, hasName);
+  let c = cardEls[p.id];
+  if (c && c.sig === sig) return c.el;
+  if (!c) {
+    const card = el('article', 'card');
+    const slots = { top: el('div', 'slot'), media: el('div', 'slot'), body: el('div', 'slot'), foot: el('div', 'slot') };
+    card.append(slots.top, slots.media, slots.body, slots.foot);
+    c = cardEls[p.id] = { el: card, slots, sig: '', mk: null };
+  }
+  fillCard(c, p, comments);
+  c.sig = sig;
+  return c.el;
+}
+
+function cardSig(p, comments, hasName) {
+  const m = S.d.meta;
+  const open = !!openComments[p.id];
+  return JSON.stringify([p.text, p.name, p.color, p.status, p.edited, p.likes, !!LIKED[p.id], p.img, p.att,
+    !!p.localImg, !!p.localUrl, p.sending, p.progress, p.role, p.time, S.teacher, !!TOK[p.id],
+    m.likes, m.comments, m.locked,
+    open ? comments.map(c => [c.id, c.text, c.status, c.edited, c.sending, c.name, c.role, !!TOK[c.id]]) : comments.length,
+    open, open && comments.some(c => c.id === editingComment) ? editingComment : '', open && hasName]);
+}
+
+function mediaKey(p) {
+  return (p.img || ('local-' + p.id)) + '|' + (p.att ? p.att.t : (p.img || p.localImg ? 'image' : ''));
+}
+
+function fillCard(c, p, comments) {
   const m = S.d.meta, T = S.teacher;
-  const card = el('article', 'card ' + (COLOR_KEYS.includes(p.color) ? p.color : 'yellow'));
+  const card = c.el;
+  card.className = 'card ' + (COLOR_KEYS.includes(p.color) ? p.color : 'yellow') +
+    (p.status === 'pending' ? ' pending' : '') + (p.sending ? ' sending' : '');
   card.dataset.id = p.id;
-  if (p.status === 'pending') card.classList.add('pending');
-  if (p.sending) card.classList.add('sending');
 
   const top = el('div', 'card-top');
   if (T && !p.sending) {
@@ -829,47 +1123,60 @@ function makeCard(p) {
   top.appendChild(el('span', 'grow'));
   if (canChange(p)) top.appendChild(btn('x', '✎', 'Edita', () => openEditor(p)));
   if ((T || TOK[p.id]) && !p.sending) top.appendChild(btn('x', '✕', 'Esborra', () => removeItem(p, 'post')));
-  if (top.children.length > 1) card.appendChild(top);
+  c.slots.top.replaceChildren(...(top.children.length > 1 ? [top] : []));
 
-  if (p.img || p.localImg) card.appendChild(makeImg(p));
-  if (p.text) card.appendChild(el('div', 'text', p.text));
-  card.appendChild(el('div', 'meta', (p.name || 'Anònim') + ' · ' +
-    (p.sending ? (p.sending === 'edit' ? 'Desant…' : 'Publicant…') : when(p.time) + (p.edited ? ' · editat' : ''))));
+  const mk = mediaKey(p);
+  if (c.mk !== mk) {
+    c.mk = mk;
+    const kind = p.att ? p.att.t : 'image';
+    const has = p.img || p.localImg || p.localUrl;
+    c.slots.media.replaceChildren(...(!has ? [] : kind === 'image' ? [makeImg(p)] : [makeMedia(p)]));
+  }
 
+  const body = [];
+  if (p.text) body.push(el('div', 'text', p.text));
+  let status = when(p.time) + (p.edited ? ' · editat' : '');
+  if (p.sending) status = p.sending === 'edit' ? 'Desant…' : (p.progress != null ? 'Pujant… ' + Math.round(p.progress * 100) + '%' : 'Publicant…');
+  body.push(el('div', 'meta', (p.name || 'Anònim') + ' · ' + status));
+  if (p.sending && p.progress != null) {
+    const bar = el('div', 'bar'), fill = el('i');
+    fill.style.width = Math.round(p.progress * 100) + '%';
+    bar.appendChild(fill);
+    body.push(bar);
+  }
+  c.slots.body.replaceChildren(...body);
+
+  const foot = [];
   if (T && p.status === 'pending') {
     const row = el('div', 'approve');
     row.appendChild(btn('yes', 'Aprova', '', () => approveItem(p)));
     row.appendChild(btn('no', 'Rebutja', '', () => removeItem(p, 'post', true)));
-    card.appendChild(row);
+    foot.push(row);
   }
-
   const live = p.status === 'ok' && !p.sending;
-  if (live && (m.likes || m.comments || T)) {
-    const comments = commentsFor(p.id);
-    const showLikes = m.likes;
-    const showComments = m.comments || comments.length > 0;
-    if (showLikes || showComments) {
-      const row = el('div', 'acts-row');
-      if (showLikes) {
-        const liked = !!LIKED[p.id];
-        const b = btn('pill' + (liked ? ' liked' : ''), (liked ? '♥ ' : '♡ ') + (p.likes || 0), liked ? 'Ja no m\'agrada' : 'M\'agrada', () => toggleLike(p));
-        b.setAttribute('aria-pressed', String(liked));
-        row.appendChild(b);
-      }
-      if (showComments) {
-        const b = btn('pill', '💬 ' + comments.length, 'Comentaris', () => {
-          openComments[p.id] = !openComments[p.id];
-          render();
-          if (openComments[p.id]) focusComment(p.id);
-        });
-        b.setAttribute('aria-expanded', String(!!openComments[p.id]));
-        row.appendChild(b);
-      }
-      card.appendChild(row);
-      if (showComments && openComments[p.id]) card.appendChild(commentsPanel(p, comments));
+  const showLikes = live && m.likes;
+  const showComments = live && (m.comments || comments.length > 0);
+  if (showLikes || showComments) {
+    const row = el('div', 'acts-row');
+    if (showLikes) {
+      const liked = !!LIKED[p.id];
+      const b = btn('pill' + (liked ? ' liked' : ''), (liked ? '♥ ' : '♡ ') + (p.likes || 0), liked ? 'Ja no m\'agrada' : 'M\'agrada', () => toggleLike(p));
+      b.setAttribute('aria-pressed', String(liked));
+      row.appendChild(b);
     }
+    if (showComments) {
+      const b = btn('pill', '💬 ' + comments.length, 'Comentaris', () => {
+        openComments[p.id] = !openComments[p.id];
+        render();
+        if (openComments[p.id]) focusComment(p.id);
+      });
+      b.setAttribute('aria-expanded', String(!!openComments[p.id]));
+      row.appendChild(b);
+    }
+    foot.push(row);
+    if (showComments && openComments[p.id]) foot.push(commentsPanel(p, comments));
   }
-  return card;
+  c.slots.foot.replaceChildren(...foot);
 }
 
 function makeImg(p) {
@@ -877,11 +1184,17 @@ function makeImg(p) {
   let img = imgEls[key];
   if (img) return img;
   img = document.createElement('img');
+  img.className = 'pic';
   img.alt = 'Foto de ' + (p.name || 'un alumne');
   img.loading = 'lazy';
+  img.decoding = 'async';
+  if (p.att && p.att.w && p.att.h) {
+    img.width = p.att.w; img.height = p.att.h;
+    img.style.aspectRatio = p.att.w + ' / ' + p.att.h;
+  }
   img.addEventListener('click', () => {
     const big = $('lightbox').querySelector('img');
-    big.src = (p.pub && !imgCache[p.img]) ? thumb(p.img, 1600) : img.src;
+    big.src = (p.pub && !imgCache[p.img] && p.img) ? thumb(p.img, 1600) : img.src;
     open('lightbox');
   });
   const fallback = () => {
@@ -890,13 +1203,70 @@ function makeImg(p) {
   };
   if (p.localImg) img.src = p.localImg;
   else if (imgCache[p.img]) img.src = imgCache[p.img];
-  else if (p.pub) { img.onerror = () => { img.onerror = null; fallback(); }; img.src = thumb(p.img, 800); }
+  else if (p.pub) { img.onerror = () => { img.onerror = null; fallback(); }; img.src = thumb(p.img, 600); }
   else fallback();
   if (p.img) imgEls[p.img] = img;
   return img;
 }
-function thumb(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
 
+// Audio and video load nothing until someone presses play.
+function makeMedia(p, big) {
+  const key = (big ? 'big-' : '') + (p.img || p.id);
+  if (!big && mediaEls[key]) return mediaEls[key];
+  const a = p.att || {};
+  const src = p.localUrl || imgCache[p.img] || (p.img ? driveFile(p.img) : '');
+  const wrap = el('div', 'media');
+  const fallback = () => {
+    if (!p.img) return;
+    if (a.t === 'video') {
+      const box = el('div', 'vid');
+      const f = document.createElement('iframe');
+      f.src = drivePreview(p.img);
+      f.allow = 'autoplay; fullscreen';
+      box.appendChild(f);
+      wrap.replaceChildren(box);
+    } else {
+      const f = document.createElement('iframe');
+      f.src = drivePreview(p.img);
+      f.style.cssText = 'width:100%;height:90px;border:0;border-radius:8px';
+      wrap.replaceChildren(f);
+    }
+    const link = el('a', 'fallback linkish', 'Obre a Google Drive');
+    link.href = driveView(p.img); link.target = '_blank';
+    wrap.appendChild(link);
+  };
+  if (a.t === 'audio') {
+    const au = document.createElement('audio');
+    au.controls = true;
+    au.preload = 'none';
+    au.src = src;
+    au.addEventListener('error', fallback, { once: true });
+    wrap.appendChild(au);
+    if (a.d) wrap.appendChild(el('div', 'dur', '🎤 ' + mmss(a.d)));
+  } else {
+    const box = el('div', 'vid');
+    if (p.img && p.pub && !p.localUrl) box.style.backgroundImage = 'url("' + thumb(p.img, 800) + '")';
+    const play = btn('play', '', 'Reprodueix el vídeo');
+    play.appendChild(el('span', '', '▶'));
+    play.addEventListener('click', () => {
+      const v = document.createElement('video');
+      v.controls = true;
+      v.playsInline = true;
+      v.setAttribute('playsinline', '');
+      v.src = src;
+      v.addEventListener('error', fallback, { once: true });
+      box.replaceChildren(v);
+      v.play().catch(() => {});
+    });
+    box.appendChild(play);
+    if (a.d) box.appendChild(el('span', 'dur', mmss(a.d)));
+    wrap.appendChild(box);
+  }
+  if (!big) mediaEls[key] = wrap;
+  return wrap;
+}
+
+/* ---------- comments ---------- */
 function commentsPanel(p, list) {
   const m = S.d.meta, T = S.teacher;
   const box = el('div', 'comments');
@@ -953,7 +1323,7 @@ function commentsPanel(p, list) {
   }
   return box;
 }
-// Can this device change (edit) the item? Teachers: always. Students: their own, if the board is open.
+// Can this device edit the item? Teachers: always. Students: their own, if the board is open.
 function canChange(it) {
   if (it.sending) return false;
   if (S.teacher) return true;
@@ -1036,11 +1406,11 @@ function sendComment(p, text) {
     c.sending = false;
     if (r.status === 'pending') {
       c.status = 'pending';
-      render();
       PEND[c.id] = { b: S.id, kind: 'comment', item: Object.assign({}, c, { status: 'pending', sending: false }) };
       savePend();
       toast('Comentari enviat. Es veurà quan el professorat l\'aprovi.');
     }
+    render();
   });
 }
 
@@ -1050,7 +1420,7 @@ function toggleLike(p) {
   store.set('liked', LIKED);
   p.likes = Math.max(0, (p.likes || 0) + (on ? 1 : -1));
   render();
-  write(run('toggleLike', S.id, p.id, DEVICE, on), n => { p.likes = n; });
+  write(run('toggleLike', S.id, p.id, DEVICE, on), n => { p.likes = n; render(); });
 }
 
 function removeItem(item, kind, reject) {
@@ -1069,10 +1439,12 @@ function approveItem(item) {
   write(run('approve', S.id, item.id));
 }
 
-/* ---------- settings & columns (teacher) ---------- */
+/* =================================================================
+   Settings, columns and backgrounds (teacher)
+   ================================================================= */
 function settingsFrom(m) {
   return { title: m.title, type: m.type, columns: m.columns, locked: m.locked, approval: m.approval,
-           nameReq: m.nameReq, likes: m.likes, comments: m.comments };
+           nameReq: m.nameReq, likes: m.likes, comments: m.comments, bg: m.bg || '', bgDark: !!m.bgDark };
 }
 function saveSettings(onOk) {
   render();
@@ -1124,21 +1496,94 @@ function moveColumn(i, dir) {
   columnChange(cols => { const t = cols[i]; cols[i] = cols[j]; cols[j] = t; });
 }
 
-let sType = 'wall';
+let sType = 'wall', sBg = '', sBgDark = false, settingsOpen = false;
+function buildBgPicker() {
+  const box = $('bgPicker');
+  box.textContent = '';
+  BG_GROUPS.forEach(g => {
+    box.appendChild(el('div', 'bggroup', g[0]));
+    const tiles = el('div', 'bgtiles');
+    g[1].forEach(b => {
+      const t = btn('bgtile', '', b.n, () => pickBg(b.k, !!b.dark));
+      t.style.background = bgCss(b);
+      t.dataset.k = b.k;
+      tiles.appendChild(t);
+    });
+    if (g[0] === 'Il·lustracions') {
+      const t = btn('bgtile', '📷', 'Foto pròpia', () => $('bgFile').click());
+      t.dataset.k = 'photo';
+      t.style.background = '#fff';
+      tiles.appendChild(t);
+    }
+    box.appendChild(tiles);
+  });
+}
+function markBg() {
+  $('bgPicker').querySelectorAll('.bgtile').forEach(t => {
+    const on = t.dataset.k === 'photo' ? sBg.indexOf('photo:') === 0 : t.dataset.k === sBg;
+    t.setAttribute('aria-pressed', String(on));
+  });
+}
+function pickBg(k, dark) {
+  sBg = k; sBgDark = dark;
+  markBg();
+  applyBackground(sBg, sBgDark);   // live preview behind the dialog
+}
+$('bgFile').onchange = async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const r = await shrink(f, 1920);
+    const dark = await isDarkImage(r.data);
+    toast('Pujant la foto…');
+    const res = await run('setBackgroundPhoto', S.id, r.data);
+    imgCache[res.id] = r.data;
+    pickBg('photo:' + res.id, dark);
+    toast('Foto pujada. Prem «Desa» per fer-la servir.');
+  } catch (err) { toast(errText(err), true); }
+};
+function isDarkImage(src) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = 24; c.height = 24;
+      const x = c.getContext('2d');
+      x.drawImage(img, 0, 0, 24, 24);
+      const d = x.getImageData(0, 0, 24, 24).data;
+      let sum = 0;
+      for (let i = 0; i < d.length; i += 4) sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+      resolve(sum / (d.length / 4) < 140);
+    };
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+}
+
 $('settingsBtn').onclick = () => {
   const m = S.d.meta;
   $('sTitle').value = m.title;
   sType = m.type; setTypeButtons($('sTypes'), sType);
+  sBg = m.bg || ''; sBgDark = !!m.bgDark;
+  if (!$('bgPicker').firstChild) buildBgPicker();
+  markBg();
   $('sLocked').checked = m.locked; $('sApproval').checked = m.approval; $('sNameReq').checked = m.nameReq;
   $('sLikes').checked = m.likes; $('sComments').checked = m.comments;
   $('sArchive').textContent = m.status === 'arxivat' ? 'Recupera el tauler' : 'Arxiva el tauler';
+  settingsOpen = true;
   open('settings');
 };
 $('sTypes').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
   sType = b.dataset.type; setTypeButtons($('sTypes'), sType);
 };
-$('sCancel').onclick = () => close('settings');
+function closeSettings() {
+  settingsOpen = false;
+  close('settings');
+  if (S.d) applyBackground(S.d.meta.bg, S.d.meta.bgDark);
+}
+$('sCancel').onclick = closeSettings;
 $('settingsForm').onsubmit = e => {
   e.preventDefault();
   const m = S.d.meta;
@@ -1147,7 +1592,8 @@ $('settingsForm').onsubmit = e => {
   if (m.type === 'columns' && !m.columns.length) m.columns = [{ id: newColumnId(), name: 'Columna 1' }];
   m.locked = $('sLocked').checked; m.approval = $('sApproval').checked; m.nameReq = $('sNameReq').checked;
   m.likes = $('sLikes').checked; m.comments = $('sComments').checked;
-  close('settings');
+  m.bg = sBg; m.bgDark = sBgDark;
+  closeSettings();
   HOME = null;
   saveSettings(() => toast('Configuració desada.'));
 };
@@ -1155,15 +1601,15 @@ $('sArchive').onclick = () => {
   const m = S.d.meta;
   const status = m.status === 'arxivat' ? 'actiu' : 'arxivat';
   m.status = status;
-  close('settings');
+  closeSettings();
   HOME = null;
   render();
   write(run('setBoardStatus', S.id, status), () => toast(status === 'arxivat' ? 'Tauler arxivat. Els alumnes ja no hi poden entrar.' : 'Tauler recuperat.'));
 };
 $('sDelete').onclick = () => {
   const m = S.d.meta;
-  if (!confirm('Vols eliminar el tauler «' + m.title + '»? S\'esborraran totes les publicacions i fotos. No es pot desfer.')) return;
-  close('settings');
+  if (!confirm('Vols eliminar el tauler «' + m.title + '»? S\'esborraran totes les publicacions i fitxers. No es pot desfer.')) return;
+  closeSettings();
   const id = S.id;
   HOME = null;
   go({});
@@ -1171,21 +1617,39 @@ $('sDelete').onclick = () => {
     .catch(e => toast(errText(e), true));
 };
 
-/* ---------- present (QR + code) ---------- */
+/* =================================================================
+   QR code (the library only loads when a teacher needs it)
+   ================================================================= */
+let qrLoading = null;
+function loadQR() {
+  if (window.QRCode) return Promise.resolve();
+  if (!qrLoading) {
+    qrLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.onload = resolve;
+      s.onerror = () => { qrLoading = null; reject(new Error('qr')); };
+      document.head.appendChild(s);
+    });
+  }
+  return qrLoading;
+}
+function drawQR(box, size) {
+  box.textContent = '';
+  if (!BOOT.studentUrl) {
+    box.textContent = 'Falta l\'enllaç dels alumnes. Enganxa\'l al full Administració › Configuració › url_alumnes i torna a carregar aquesta pàgina.';
+    return;
+  }
+  loadQR()
+    .then(() => { box.textContent = ''; new QRCode(box, { text: boardLink(), width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); })
+    .catch(() => { box.textContent = boardLink(); });
+}
 function boardLink() { return BOOT.studentUrl + '?b=' + S.id; }
 $('presentBtn').onclick = () => {
   $('prTitle').textContent = S.d.meta.title;
   $('prCode').textContent = S.id;
-  $('qr').textContent = '';
   $('prUrl').textContent = BOOT.studentUrl ? boardLink() : '';
-  if (!BOOT.studentUrl) {
-    $('qr').textContent = 'Falta l\'enllaç dels alumnes. Enganxa\'l al full Administració › Configuració › url_alumnes i torna a carregar aquesta pàgina.';
-    open('present');
-    return;
-  }
-  const size = Math.max(160, Math.min(440, window.innerWidth - 80, window.innerHeight - 330));
-  if (window.QRCode) new QRCode($('qr'), { text: boardLink(), width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
-  else $('qr').textContent = boardLink();
+  drawQR($('qr'), Math.max(160, Math.min(440, window.innerWidth - 80, window.innerHeight - 330)));
   open('present');
 };
 $('closePresent').onclick = () => close('present');
@@ -1197,18 +1661,179 @@ function copy(text, button, label) {
 $('copyLink').onclick = () => copy(boardLink(), $('copyLink'), 'Copia l\'enllaç');
 $('copyJoin').onclick = () => copy(BOOT.studentUrl, $('copyJoin'), 'Copia l\'enllaç per entrar amb codi');
 
-/* ---------- lightbox, escape ---------- */
+/* =================================================================
+   Slideshow
+   ================================================================= */
+const SS = { open: false, i: 0, list: [], order: null };
+// Slides keep the order they had when the slideshow started; new posts are added at the end.
+function slideList() {
+  const fresh = boardSlides();
+  if (!SS.order) { SS.order = fresh.map(s => s.k); return fresh; }
+  const byKey = {};
+  fresh.forEach(s => { byKey[s.k] = s; });
+  const list = SS.order.filter(k => byKey[k]).map(k => byKey[k]);
+  fresh.forEach(s => { if (SS.order.indexOf(s.k) < 0) { SS.order.push(s.k); list.push(s); } });
+  return list;
+}
+function boardSlides() {
+  const list = [{ k: 'title' }];
+  const posts = S.d.posts.filter(p => p.status === 'ok' && !p.sending);
+  if (isColumns()) {
+    const cols = visibleColumns();
+    const known = {};
+    cols.forEach(c => { known[c.id] = true; });
+    cols.forEach(c => posts.filter(p => (known[p.col] ? p.col : cols[0].id) === c.id)
+      .forEach(p => list.push({ k: p.id, p, col: S.d.meta.columns.length ? c.name : '' })));
+  } else {
+    posts.forEach(p => list.push({ k: p.id, p }));
+  }
+  return list;
+}
+function openSlides() {
+  SS.open = true;
+  SS.order = null;
+  SS.list = slideList();
+  SS.i = SS.list.length > 1 ? 1 : 0;
+  $('slides').hidden = false;
+  document.body.classList.add('noscroll');
+  drawSlide();
+  const s = $('slides');
+  if (s.requestFullscreen) s.requestFullscreen().catch(() => {});
+}
+function closeSlides() {
+  if (!SS.open) return;
+  SS.open = false;
+  $('slides').hidden = true;
+  $('slStage').textContent = '';
+  document.body.classList.remove('noscroll');
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+}
+function textSize(len, media) {
+  const tiers = [[40, 'clamp(30px, 6vw, 86px)'], [120, 'clamp(26px, 4.4vw, 64px)'], [300, 'clamp(22px, 3.2vw, 46px)'],
+                 [600, 'clamp(19px, 2.4vw, 36px)'], [1e9, 'clamp(17px, 1.9vw, 28px)']];
+  let i = tiers.findIndex(t => len < t[0]);
+  if (media) i = Math.min(i + 1, tiers.length - 1);
+  return tiers[i][1];
+}
+function slideNode(s) {
+  if (s.k === 'title') {
+    const box = el('div', 'sl-title');
+    box.appendChild(el('h2', '', S.d.meta.title));
+    if (S.teacher && BOOT.studentUrl) {
+      box.appendChild(el('div', 'sub', 'Escaneja el codi per participar'));
+      const q = el('div', 'qr');
+      box.appendChild(q);
+      drawQR(q, Math.max(140, Math.min(320, window.innerHeight * 0.38)));
+      box.appendChild(el('div', 'bigcode', S.id));
+    }
+    return box;
+  }
+  const p = s.p;
+  const kind = p.att ? p.att.t : (p.img ? 'image' : '');
+  const hasMedia = !!(p.img || p.localImg);
+  const box = el('div', 'sl-post' + (hasMedia ? ' has-media' : ''));
+  const text = el('div', 'sl-left');
+  if (s.col) text.appendChild(el('div', 'sl-col', s.col));
+  text.appendChild(el('h2', 'sl-name', p.name || 'Anònim'));
+  if (p.text) {
+    const t = el('div', 'sl-text', p.text);
+    t.style.fontSize = textSize(p.text.length, hasMedia);
+    text.appendChild(t);
+  }
+  box.appendChild(text);
+  if (hasMedia) {
+    const m = el('div', 'sl-media');
+    if (kind === 'image') {
+      const img = document.createElement('img');
+      img.alt = 'Foto de ' + (p.name || 'un alumne');
+      img.src = imgCache[p.img] || p.localImg || (p.pub ? thumb(p.img, 1600) : (imgEls[p.img] && imgEls[p.img].src) || '');
+      m.appendChild(img);
+    } else {
+      const media = makeMedia(p, true);
+      media.style.width = '100%';
+      m.appendChild(media);
+    }
+    box.appendChild(m);
+  }
+  return box;
+}
+function drawSlide() {
+  const s = SS.list[SS.i];
+  $('slStage').replaceChildren(slideNode(s));
+  SS.shown = s.k === 'title' ? 'title' : JSON.stringify([s.p.text, s.p.name, s.p.img, s.p.att, s.col]);
+  $('slCount').textContent = SS.i === 0 ? 'Inici' : SS.i + ' / ' + (SS.list.length - 1);
+  // Preload the next photo so it appears instantly.
+  const n = SS.list[SS.i + 1];
+  if (n && n.p && n.p.img && n.p.pub && (!n.p.att || n.p.att.t === 'image')) new Image().src = thumb(n.p.img, 1600);
+}
+function goSlide(i) {
+  if (!SS.open) return;
+  i = Math.max(0, Math.min(SS.list.length - 1, i));
+  if (i === SS.i) return;
+  SS.i = i;
+  drawSlide();
+}
+// Called after every board update: new posts join the end; the current slide stays.
+function updateSlides() {
+  if (!SS.open) return;
+  const cur = SS.list[SS.i] && SS.list[SS.i].k;
+  SS.list = slideList();
+  let i = SS.list.findIndex(s => s.k === cur);
+  if (i < 0) i = Math.min(SS.i, SS.list.length - 1);
+  SS.i = i;
+  const s = SS.list[i];
+  const sig = s.k === 'title' ? 'title' : JSON.stringify([s.p.text, s.p.name, s.p.img, s.p.att, s.col]);
+  const playing = [...$('slStage').querySelectorAll('audio, video')].some(m => !m.paused);
+  if (sig !== SS.shown && !playing) drawSlide();
+  else $('slCount').textContent = SS.i === 0 ? 'Inici' : SS.i + ' / ' + (SS.list.length - 1);
+}
+$('slidesBtn').onclick = openSlides;
+$('slPrev').onclick = () => goSlide(SS.i - 1);
+$('slNext').onclick = () => goSlide(SS.i + 1);
+$('slClose').onclick = closeSlides;
+$('slFull').onclick = () => {
+  if (document.fullscreenElement) { SS.keepOpen = true; document.exitFullscreen().catch(() => {}); }
+  else if ($('slides').requestFullscreen) $('slides').requestFullscreen().catch(() => {});
+};
+let swipeX = null;
+$('slStage').addEventListener('pointerdown', e => {
+  swipeX = e.target.closest('audio, video, iframe, button') ? null : e.clientX;
+});
+$('slStage').addEventListener('pointerup', e => {
+  if (swipeX == null) return;
+  const dx = e.clientX - swipeX;
+  swipeX = null;
+  if (Math.abs(dx) > 60) goSlide(SS.i + (dx < 0 ? 1 : -1));
+});
+
+/* ---------- keyboard, lightbox ---------- */
 $('lightbox').onclick = () => close('lightbox');
 document.addEventListener('keydown', e => {
+  if (SS.open) {
+    const k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' ') { e.preventDefault(); goSlide(SS.i + 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); goSlide(SS.i - 1); }
+    else if (k === 'Home') goSlide(0);
+    else if (k === 'End') goSlide(SS.list.length - 1);
+    else if (k === 'Escape') closeSlides();
+    return;
+  }
   if (e.key !== 'Escape') return;
-  ['lightbox', 'present', 'composer', 'settings', 'newBoard'].forEach(close);
+  if ($('settings').classList.contains('open')) closeSettings();
+  ['lightbox', 'present', 'newBoard'].forEach(close);
+  if ($('composer').classList.contains('open')) closeComposer();
+});
+document.addEventListener('fullscreenchange', () => {
+  // Leaving full screen with Esc also leaves the slideshow.
+  if (!document.fullscreenElement && SS.open && SS.wasFull && !SS.keepOpen) closeSlides();
+  SS.keepOpen = false;
+  SS.wasFull = !!document.fullscreenElement;
 });
 
 /* =================================================================
-   Composer
+   Composer: text, colour, and one photo, video or audio
    ================================================================= */
 let pColor = store.get('color', COLORS[Math.floor(Math.random() * COLORS.length)].k);
-let imageData = '';
 COLORS.forEach(c => {
   const b = btn('swatch ' + c.k, '', c.n, () => setColor(c.k));
   b.dataset.color = c.k;
@@ -1226,77 +1851,204 @@ function setColor(k, keep) {
 }
 setColor(COLOR_KEYS.includes(pColor) ? pColor : 'yellow');
 
-// The composer is used for new posts and for editing (editing = the post being edited).
-let editing = null, imgState = 'keep';
+// The attachment being prepared:
+//   {kind:'image', data, w, h} | {kind:'audio'|'video', blob, url, dur} | {kind, keep:true} (editing, unchanged)
+let attach = null;
+let editing = null, composerWasEdit = false;
+
+function showAttach() {
+  const box = $('pAttach');
+  box.textContent = '';
+  box.className = attach && attach.kind === 'audio' ? 'audio' : '';
+  if (!attach) { box.hidden = true; return; }
+  let node;
+  if (attach.kind === 'image') {
+    node = document.createElement('img');
+    node.alt = 'Foto seleccionada';
+    node.src = attach.data || attach.src;
+  } else if (attach.kind === 'video') {
+    node = document.createElement('video');
+    node.controls = true; node.playsInline = true; node.setAttribute('playsinline', '');
+    node.src = attach.url || attach.src;
+  } else {
+    node = document.createElement('audio');
+    node.controls = true;
+    node.src = attach.url || attach.src;
+  }
+  box.appendChild(node);
+  const label = attach.kind === 'image' ? 'Treu la foto' : attach.kind === 'video' ? 'Treu el vídeo' : 'Treu l\'àudio';
+  box.appendChild(btn('tbtn rm', label, '', () => { clearAttach(); attachRemoved = true; }));
+  box.hidden = false;
+}
+let attachRemoved = false;
+function clearAttach() {
+  if (attach && attach.url && !attach.keep) { /* keep the URL: a sending post may still use it */ }
+  attach = null;
+  showAttach();
+}
+function setAttach(a) { attach = a; attachRemoved = false; showAttach(); $('pErr').textContent = ''; }
+
+function shrink(file, max) {
+  max = max || 1280;
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s);
+      c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve({ data: c.toDataURL('image/jpeg', 0.82), w: c.width, h: c.height });
+    };
+    img.onerror = () => reject(new Error('No s\'ha pogut llegir la foto. Prova amb un JPG o PNG.'));
+    img.src = url;
+  });
+}
+function mediaInfo(url, kind) {
+  return new Promise(resolve => {
+    const m = document.createElement(kind === 'video' ? 'video' : 'audio');
+    m.preload = 'metadata';
+    const done = () => resolve({ dur: isFinite(m.duration) ? m.duration : 0, w: m.videoWidth || 0, h: m.videoHeight || 0 });
+    m.onloadedmetadata = done;
+    m.onerror = () => resolve({ dur: 0 });
+    setTimeout(() => resolve({ dur: 0 }), 4000);
+    m.src = url;
+  });
+}
+
+$('pFile').onchange = async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  const type = f.type || '';
+  try {
+    if (type.indexOf('image/') === 0) {
+      $('pErr').textContent = 'Preparant la foto…';
+      const r = await shrink(f);
+      setAttach({ kind: 'image', data: r.data, w: r.w, h: r.h });
+    } else if (type.indexOf('video/') === 0 || type.indexOf('audio/') === 0) {
+      if (f.size > MAX_MEDIA) {
+        $('pErr').textContent = 'El fitxer és massa gran (màxim 20 MB). ' +
+          (type.indexOf('video/') === 0 ? 'Prova de gravar-lo aquí amb «🎥 Grava vídeo», que ocupa molt menys.' : '');
+        return;
+      }
+      const kind = type.indexOf('video/') === 0 ? 'video' : 'audio';
+      const url = URL.createObjectURL(f);
+      const info = await mediaInfo(url, kind);
+      setAttach({ kind, blob: f, url, dur: info.dur, w: info.w, h: info.h });
+    } else {
+      $('pErr').textContent = 'Aquest tipus de fitxer no és compatible.';
+    }
+  } catch (err) { $('pErr').textContent = errText(err); }
+};
+
+/* ---------- recording in the browser ---------- */
+const REC = { rec: null, stream: null, chunks: [], timer: null, start: 0, kind: '', cancelled: false };
+const REC_LIMIT = { audio: 300, video: 120 };
+async function startRecording(kind) {
+  if (REC.rec) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    $('pErr').textContent = 'Aquest navegador no pot gravar. Fes servir «📎 Foto, vídeo o àudio».';
+    return;
+  }
+  try {
+    REC.stream = await navigator.mediaDevices.getUserMedia(kind === 'video'
+      ? { audio: true, video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' } }
+      : { audio: true });
+  } catch (err) {
+    $('pErr').textContent = kind === 'video'
+      ? 'No s\'ha pogut fer servir la càmera. Comprova els permisos o fes servir «📎 Foto, vídeo o àudio».'
+      : 'No s\'ha pogut fer servir el micròfon. Comprova els permisos o fes servir «📎 Foto, vídeo o àudio».';
+    return;
+  }
+  const types = kind === 'video'
+    ? ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm']
+    : ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+  const mime = types.find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || '';
+  const opts = kind === 'video' ? { videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 48000 };
+  if (mime) opts.mimeType = mime;
+  REC.kind = kind; REC.chunks = []; REC.cancelled = false;
+  REC.rec = new MediaRecorder(REC.stream, opts);
+  REC.rec.ondataavailable = ev => { if (ev.data && ev.data.size) REC.chunks.push(ev.data); };
+  REC.rec.onstop = () => {
+    const secs = (Date.now() - REC.start) / 1000;
+    const type = (REC.rec.mimeType || mime || (kind === 'video' ? 'video/webm' : 'audio/webm')).split(';')[0];
+    REC.stream.getTracks().forEach(t => t.stop());
+    clearInterval(REC.timer);
+    $('pRec').hidden = true;
+    $('pAttachBtns').hidden = false;
+    $('recVideo').srcObject = null;
+    const cancelled = REC.cancelled;
+    REC.rec = null;
+    if (cancelled) return;
+    const blob = new Blob(REC.chunks, { type });
+    if (blob.size > MAX_MEDIA) { $('pErr').textContent = 'La gravació és massa llarga. Prova-ho amb una de més curta.'; return; }
+    setAttach({ kind, blob, url: URL.createObjectURL(blob), dur: secs });
+  };
+  if (kind === 'video') { const v = $('recVideo'); v.hidden = false; v.srcObject = REC.stream; v.play().catch(() => {}); }
+  else $('recVideo').hidden = true;
+  clearAttach();
+  $('pRec').hidden = false;
+  $('pAttachBtns').hidden = true;
+  $('recMax').textContent = '/ ' + mmss(REC_LIMIT[kind]);
+  $('recTime').textContent = '0:00';
+  REC.start = Date.now();
+  REC.rec.start(1000);
+  REC.timer = setInterval(() => {
+    const s = (Date.now() - REC.start) / 1000;
+    $('recTime').textContent = mmss(s);
+    if (s >= REC_LIMIT[kind]) stopRecording();
+  }, 250);
+}
+function stopRecording(cancel) {
+  if (!REC.rec) return;
+  REC.cancelled = !!cancel;
+  if (REC.rec.state !== 'inactive') REC.rec.stop();
+}
+$('recAudioBtn').onclick = () => startRecording('audio');
+$('recVideoBtn').onclick = () => startRecording('video');
+$('recStop').onclick = () => stopRecording(false);
+$('recCancel').onclick = () => stopRecording(true);
+
+/* ---------- uploading audio/video in pieces ---------- */
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(new Error('No s\'ha pogut llegir el fitxer.'));
+    r.readAsDataURL(blob);
+  });
+}
+async function uploadMedia(blob, onProgress) {
+  const up = await run('startUpload', S.id, { mime: blob.type, size: blob.size });
+  let offset = 0;
+  onProgress(0);
+  while (offset < blob.size) {
+    const end = Math.min(offset + up.chunk, blob.size);
+    const b64 = await blobToBase64(blob.slice(offset, end));
+    const r = await run('uploadChunk', S.id, up.id, offset, b64);
+    offset = end;
+    onProgress(offset / blob.size);
+    if (r && r.done) break;
+  }
+  return up.id;
+}
+
+/* ---------- opening the composer ---------- */
 function setComposerMode(isEdit) {
   $('pTitle').textContent = isEdit ? 'Edita la publicació' : 'Nova publicació';
   $('pSend').textContent = isEdit ? 'Desa' : 'Publica';
 }
-
-let composerWasEdit = false;
-function openEditor(p) {
-  editing = p;
-  composerWasEdit = true;
-  imgState = 'keep';
-  imageData = '';
-  setComposerMode(true);
-  $('pColWrap').hidden = true;
-  $('pName').closest('.field').hidden = true;
-  $('pText').value = p.text || '';
-  setColor(COLOR_KEYS.includes(p.color) ? p.color : 'yellow', true);
-  const src = p.localImg || (p.img && (imgCache[p.img] || (p.pub ? thumb(p.img, 800) : (imgEls[p.img] && imgEls[p.img].src)))) || '';
-  $('pPreview').querySelector('img').src = src;
-  $('pPreview').hidden = !(p.img || p.localImg);
-  $('pErr').textContent = '';
-  open('composer');
-  setTimeout(() => $('pText').focus(), 50);
-}
-
-function saveEdit() {
-  const p = editing;
-  const text = $('pText').value.trim();
-  const hasImg = imgState === 'keep' ? !!(p.img || p.localImg) : imgState === 'new';
-  if (!text && !hasImg) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto.'; return; }
-  const image = imgState === 'new' ? imageData : (imgState === 'removed' ? '' : null);
-  const prev = { text: p.text, color: p.color, img: p.img, localImg: p.localImg, pub: p.pub, edited: p.edited, status: p.status };
-  p.text = text; p.color = pColor; p.edited = Date.now(); p.sending = 'edit';
-  if (imgState === 'new') { p.img = ''; p.localImg = imageData; }
-  if (imgState === 'removed') { p.img = ''; p.localImg = ''; }
-  editing = null; imageData = ''; imgState = 'keep';
-  $('pText').value = ''; $('pPreview').hidden = true;
-  close('composer');
-  render();
-  busy++;
-  run('editItem', S.id, p.id, TOK[p.id] || '', { text, color: p.color, image })
-    .then(r => {
-      busy--;
-      p.sending = false;
-      if (image && r.img) { p.img = r.img; p.pub = r.pub; imgCache[r.img] = image; }
-      if (r.status === 'pending' && !S.teacher) {
-        p.status = 'pending';
-        PEND[p.id] = { b: S.id, kind: 'post', item: Object.assign({}, p, { localImg: p.localImg || (p.img && imgCache[p.img]) || '' }) };
-        savePend();
-        toast('Canvis desats. Es veuran quan el professorat ho aprovi.');
-      }
-      render();
-      pollSoon();
-    })
-    .catch(err => {
-      busy--;
-      Object.assign(p, prev, { sending: false });
-      render();
-      toast(errText(err), true);
-      S.v = ''; pollSoon();
-    });
-}
-
 function openComposer(colId) {
   const m = S.d.meta;
   editing = null;
   if (composerWasEdit) {
-    // Don't carry an edited post's text or photo into a new post.
+    // Don't carry an edited post's text or file into a new post.
     composerWasEdit = false;
-    $('pText').value = ''; imageData = ''; imgState = 'keep'; $('pPreview').hidden = true;
+    $('pText').value = '';
+    clearAttach();
   }
   setComposerMode(false);
   setColor(store.get('color', pColor), true);
@@ -1312,94 +2064,167 @@ function openComposer(colId) {
   }
   $('pColWrap').hidden = m.type !== 'columns';
   $('pName').value = myName();
-  $('pName').closest('.field').hidden = S.teacher;
+  $('pNameWrap').hidden = S.teacher;
   $('pNameLabel').textContent = m.nameReq ? 'El teu nom' : 'El teu nom (opcional)';
   $('pErr').textContent = '';
   open('composer');
   setTimeout(() => $('pText').focus(), 50);
 }
-$('fab').onclick = () => openComposer(null);
-$('pCancel').onclick = () => close('composer');
-
-$('pFile').onchange = async e => {
-  const f = e.target.files[0];
-  e.target.value = '';
-  if (!f) return;
-  $('pErr').textContent = 'Preparant la foto…';
-  try {
-    imageData = await shrink(f);
-    imgState = 'new';
-    $('pPreview').querySelector('img').src = imageData;
-    $('pPreview').hidden = false;
-    $('pErr').textContent = '';
-  } catch (err) { $('pErr').textContent = err.message; }
-};
-$('pRmImg').onclick = () => { imageData = ''; imgState = 'removed'; $('pPreview').hidden = true; };
-
-function shrink(file) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const s = Math.min(1, 1280 / Math.max(img.width, img.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(img.width * s);
-      c.height = Math.round(img.height * s);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      resolve(c.toDataURL('image/jpeg', 0.82));
-    };
-    img.onerror = () => reject(new Error('No s\'ha pogut llegir la foto. Prova amb un JPG o PNG.'));
-    img.src = url;
-  });
+function openEditor(p) {
+  editing = p;
+  composerWasEdit = true;
+  setComposerMode(true);
+  $('pColWrap').hidden = true;
+  $('pNameWrap').hidden = true;
+  $('pText').value = p.text || '';
+  setColor(COLOR_KEYS.includes(p.color) ? p.color : 'yellow', true);
+  attach = null;
+  attachRemoved = false;
+  if (p.img || p.localImg || p.localUrl) {
+    const kind = p.att ? p.att.t : 'image';
+    const src = kind === 'image'
+      ? (p.localImg || imgCache[p.img] || (p.pub ? thumb(p.img, 800) : (imgEls[p.img] && imgEls[p.img].src)) || '')
+      : (p.localUrl || imgCache[p.img] || driveFile(p.img));
+    attach = { kind, keep: true, src };
+  }
+  showAttach();
+  $('pErr').textContent = '';
+  open('composer');
+  setTimeout(() => $('pText').focus(), 50);
 }
+function closeComposer() {
+  stopRecording(true);
+  close('composer');
+}
+$('fab').onclick = () => openComposer(null);
+$('pCancel').onclick = closeComposer;
 
+/* ---------- sending ---------- */
 $('composerForm').onsubmit = e => {
   e.preventDefault();
+  if (REC.rec) { $('pErr').textContent = 'Atura la gravació abans de publicar.'; return; }
   if (editing) return saveEdit();
   const m = S.d.meta;
   const text = $('pText').value.trim();
   const name = S.teacher ? myName() : $('pName').value.trim();
-  if (!text && !imageData) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto.'; return; }
+  if (!text && !attach) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto, un vídeo o un àudio.'; return; }
   if (m.nameReq && !S.teacher && !name) { $('pErr').textContent = 'Escriu el teu nom.'; $('pName').focus(); return; }
   if (!S.teacher) store.set('name', name);
   const col = m.type === 'columns' ? $('pCol').value : '';
   const token = rid(24);
+  const a = attach;
   const p = {
-    id: 'p' + rid(16), time: Date.now(), name, text, img: '', localImg: imageData, pub: false, color: pColor,
-    col, status: 'ok', role: S.teacher ? 'teacher' : 'student', likes: 0, sending: true
+    id: 'p' + rid(16), time: Date.now(), name, text, img: '', pub: false, color: pColor, col,
+    status: 'ok', role: S.teacher ? 'teacher' : 'student', likes: 0, sending: true, order: -Date.now(),
+    att: a ? { t: a.kind, d: a.dur, w: a.w, h: a.h } : null,
+    localImg: a && a.kind === 'image' ? a.data : '', localUrl: a && a.kind !== 'image' ? a.url : ''
   };
   TOK[p.id] = token; saveTok();
   S.d.posts.unshift(p);
-  const image = imageData;
-  $('pText').value = ''; imageData = ''; $('pPreview').hidden = true;
+  $('pText').value = ''; attach = null; showAttach();
   close('composer');
   render();
-  busy++;
-  run('addPost', S.id, { id: p.id, token, name, text, image, color: pColor, col })
-    .then(r => {
-      busy--;
-      p.sending = false;
-      if (r.img) { p.img = r.img; imgCache[r.img] = image; }
-      if (r.status === 'pending') {
-        PEND[p.id] = { b: S.id, kind: 'post', item: Object.assign({}, p, { status: 'pending', localImg: image }) };
-        savePend();
-        toast('Publicat! Es veurà quan el professorat ho aprovi.');
-      }
-      pollSoon();
-    })
-    .catch(err => {
-      busy--;
-      S.d.posts = S.d.posts.filter(x => x !== p);
-      render();
-      // Give the post back so nothing is lost.
-      $('pText').value = text;
-      if (image) { imageData = image; $('pPreview').querySelector('img').src = image; $('pPreview').hidden = false; }
-      openComposer(col || null);
-      $('pErr').textContent = errText(err);
-      S.v = ''; pollSoon();
-    });
+  sendPost(p, { id: p.id, token, name, text, color: pColor, col }, a);
 };
+
+async function sendPost(p, payload, a) {
+  let counted = false;
+  try {
+    if (a && a.kind === 'image') { payload.image = a.data; payload.w = a.w; payload.h = a.h; }
+    if (a && a.kind !== 'image') {
+      payload.media = await uploadMedia(a.blob, f => { p.progress = f; render(); });
+      payload.dur = a.dur;
+      p.progress = null;
+    }
+    busy++; counted = true;
+    const r = await run('addPost', S.id, payload);
+    busy--; counted = false;
+    p.sending = false;
+    if (r.img) {
+      p.img = r.img; p.pub = r.pub;
+      imgCache[r.img] = a && a.kind === 'image' ? a.data : (a ? a.url : '');
+    }
+    if (r.status === 'pending') {
+      p.status = 'pending';
+      PEND[p.id] = { b: S.id, kind: 'post', item: Object.assign({}, p, { localImg: p.localImg, localUrl: '' }) };
+      savePend();
+      toast('Publicat! Es veurà quan el professorat ho aprovi.');
+    }
+    render();
+    pollSoon();
+  } catch (err) {
+    if (counted) busy--;
+    p.progress = null;
+    S.d.posts = S.d.posts.filter(x => x !== p);
+    render();
+    // Give the post back so nothing is lost.
+    $('pText').value = payload.text || '';
+    if (a) setAttach(a);
+    openComposer(payload.col || null);
+    $('pText').value = payload.text || '';
+    $('pErr').textContent = errText(err);
+    S.v = ''; pollSoon();
+  }
+}
+
+async function saveEdit() {
+  const p = editing;
+  const text = $('pText').value.trim();
+  const a = attach;
+  const keep = a && a.keep;
+  if (!text && !a) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto, un vídeo o un àudio.'; return; }
+  const prev = { text: p.text, color: p.color, img: p.img, localImg: p.localImg, localUrl: p.localUrl, pub: p.pub, att: p.att, edited: p.edited, status: p.status };
+  const changes = { text, color: pColor };
+  p.text = text; p.color = pColor; p.edited = Date.now(); p.sending = 'edit';
+  if (!keep) {
+    if (a) {
+      p.img = '';
+      p.att = { t: a.kind, d: a.dur, w: a.w, h: a.h };
+      p.localImg = a.kind === 'image' ? a.data : '';
+      p.localUrl = a.kind !== 'image' ? a.url : '';
+    } else if (attachRemoved) {
+      p.img = ''; p.att = null; p.localImg = ''; p.localUrl = '';
+      changes.image = '';
+    }
+  }
+  editing = null; attach = null;
+  $('pText').value = ''; showAttach();
+  close('composer');
+  render();
+  let counted = false;
+  try {
+    if (!keep && a && a.kind === 'image') { changes.image = a.data; changes.w = a.w; changes.h = a.h; }
+    if (!keep && a && a.kind !== 'image') {
+      p.sending = true;
+      changes.media = await uploadMedia(a.blob, f => { p.progress = f; render(); });
+      changes.dur = a.dur;
+      p.progress = null;
+      p.sending = 'edit';
+    }
+    busy++; counted = true;
+    const r = await run('editItem', S.id, p.id, TOK[p.id] || '', changes);
+    busy--; counted = false;
+    p.sending = false;
+    if (r.img && r.img !== prev.img) {
+      p.img = r.img; p.pub = r.pub;
+      imgCache[r.img] = a && a.kind === 'image' ? a.data : (a ? a.url : '');
+    }
+    if (r.status === 'pending' && !S.teacher) {
+      p.status = 'pending';
+      PEND[p.id] = { b: S.id, kind: 'post', item: Object.assign({}, p, { localImg: p.localImg || (p.img && imgCache[p.img] && p.att && p.att.t === 'image' ? imgCache[p.img] : ''), localUrl: '' }) };
+      savePend();
+      toast('Canvis desats. Es veuran quan el professorat ho aprovi.');
+    }
+    render();
+    pollSoon();
+  } catch (err) {
+    if (counted) busy--;
+    Object.assign(p, prev, { sending: false, progress: null });
+    render();
+    toast(errText(err), true);
+    S.v = ''; pollSoon();
+  }
+}
 
 /* =================================================================
    Drag to reorder (teacher)
@@ -1495,14 +2320,15 @@ function endDrag() {
   document.body.classList.remove('is-dragging');
   drag = null;
   const items = layoutItems();
-  if (JSON.stringify(items) === before) return;
-  // Apply the new order locally so a re-render keeps it.
-  const pos = {};
-  items.forEach((it, i) => { pos[it.id] = it; it.i = i; });
-  S.d.posts.forEach(p => { if (pos[p.id]) p.col = pos[p.id].col; });
-  S.d.posts.sort((a, b) => (pos[a.id] ? pos[a.id].i : -1) - (pos[b.id] ? pos[b.id].i : -1));
-  items.forEach(it => { delete it.i; });
-  write(run('reorder', S.id, items));
+  if (JSON.stringify(items) !== before) {
+    // Apply the new order locally so the next render keeps it.
+    const pos = {};
+    items.forEach((it, i) => { pos[it.id] = { col: it.col, i }; });
+    S.d.posts.forEach(p => { if (pos[p.id]) { p.col = pos[p.id].col; p.order = pos[p.id].i + 1; } });
+    S.d.posts.sort((a, b) => a.order - b.order);
+    write(run('reorder', S.id, items));
+  }
+  if (renderWaiting) { renderWaiting = false; render(); }
 }
 
 /* =================================================================
