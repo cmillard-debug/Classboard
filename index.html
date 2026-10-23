@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class Board</title>
+<style>
+  :root {
+    --bg: #f3f0e8; --surface: #fff; --ink: #22201b; --muted: #676255; --line: #dcd5c6;
+    --accent: #2f5d50; --accent-soft: #e3ece8; --danger: #a3261b;
+    --yellow: #ffe98c; --pink: #ffc6d3; --blue: #b9daff; --green: #c2eab9; --purple: #dacaff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         -webkit-tap-highlight-color: transparent; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid #1f6feb; outline-offset: 2px; }
+
+  /* ---------- header ---------- */
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+           padding: 10px 16px; background: rgba(243,240,232,.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 1.15rem; flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #status { font-size: .8rem; color: var(--muted); }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 11px; font-size: .92rem; white-space: nowrap; }
+  .tbtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  @media (max-width: 640px) { .lbl { display: none; } }
+
+  main { padding: 16px 16px 120px; }
+
+  /* ---------- home ---------- */
+  .home-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .home-head .who { flex: 1 1 200px; color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .seg button { border: 0; background: transparent; padding: 8px 14px; }
+  .seg button.on { background: var(--accent); color: #fff; font-weight: 600; }
+  .check { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--muted); }
+  #boardList { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .bcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .bcard .open { text-align: left; border: 0; background: none; padding: 0; }
+  .bcard h3 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+  .bcard .sub { font-size: .85rem; color: var(--muted); }
+  .bcard .acts { display: flex; gap: 6px; margin-top: auto; }
+  .bcard .acts button { border: 1px solid var(--line); background: #faf8f3; border-radius: 8px; padding: 5px 10px; font-size: .85rem; }
+  .bcard .acts .danger { color: var(--danger); }
+  .muted { color: var(--muted); }
+  .center { text-align: center; padding: 40px 16px; }
+  .linkish { color: var(--accent); }
+
+  /* ---------- join / messages ---------- */
+  .panel { max-width: 420px; margin: 40px auto; background: var(--surface); border-radius: 16px; padding: 24px; text-align: center;
+           box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 20px rgba(0,0,0,.06); }
+  .panel h2 { margin: 0 0 8px; }
+  #joinCode { width: 100%; text-align: center; font-size: 1.8rem; letter-spacing: .25em; text-transform: uppercase;
+              border: 2px solid var(--line); border-radius: 12px; padding: 10px; margin: 14px 0; }
+
+  /* ---------- board ---------- */
+  .banner { background: var(--accent-soft); border-radius: 10px; padding: 9px 13px; margin-bottom: 14px; font-size: .92rem; }
+  #wall.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+  #wall.columns { display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 8px; }
+  .col { flex: 0 0 min(300px, 85vw); background: rgba(34,32,27,.06); border-radius: 14px; padding: 10px; }
+  .col-head { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+  .col-head h2 { flex: 1; margin: 0 4px; font-size: 1.02rem; overflow-wrap: anywhere; }
+  .ibtn { border: 0; background: rgba(255,255,255,.75); border-radius: 7px; min-width: 32px; height: 32px; color: var(--muted); }
+  .col-body { display: flex; flex-direction: column; gap: 12px; min-height: 60px; }
+  .col-add { display: block; width: 100%; margin-top: 10px; border: 2px dashed var(--line); background: transparent;
+             border-radius: 10px; padding: 10px; color: var(--muted); }
+  #empty { color: var(--muted); }
+
+  .card { border-radius: 12px; padding: 12px 14px; position: relative;
+          box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.05); }
+  .card.pending { outline: 2px dashed rgba(34,32,27,.35); outline-offset: -2px; }
+  .card.sending { opacity: .7; }
+  .card-top { display: flex; align-items: center; gap: 6px; margin: -4px -6px 6px -4px; min-height: 28px; }
+  .card-top .grow { flex: 1; }
+  .handle { border: 0; background: rgba(255,255,255,.65); border-radius: 8px; padding: 4px 10px; font-size: .85rem;
+            color: var(--muted); cursor: grab; touch-action: none; user-select: none; }
+  .chip { font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.7); color: var(--muted); }
+  .chip.teacher { background: var(--accent); color: #fff; }
+  .x { border: 0; background: rgba(255,255,255,.75); border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; line-height: 1; }
+  .card img { display: block; width: 100%; border-radius: 8px; margin-bottom: 8px; cursor: zoom-in; background: rgba(0,0,0,.05); min-height: 60px; }
+  .card .text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.05rem; }
+  .card .meta { margin-top: 8px; font-size: .8rem; color: var(--muted); }
+  .approve { display: flex; gap: 8px; margin-top: 10px; }
+  .approve button { flex: 1; border: 0; border-radius: 8px; padding: 7px; font-weight: 600; }
+  .approve .yes { background: var(--accent); color: #fff; }
+  .approve .no { background: rgba(255,255,255,.8); }
+  .acts-row { display: flex; gap: 8px; margin-top: 10px; }
+  .pill { border: 0; background: rgba(255,255,255,.65); border-radius: 999px; padding: 5px 12px; font-size: .9rem; }
+  .pill.liked { background: #fff; color: #c0213f; font-weight: 600; }
+
+  .comments { margin-top: 10px; background: rgba(255,255,255,.55); border-radius: 10px; padding: 8px 10px; }
+  .cmt { padding: 6px 0; border-bottom: 1px solid rgba(34,32,27,.08); display: flex; gap: 6px; align-items: flex-start; }
+  .cmt:last-of-type { border-bottom: 0; }
+  .cmt .body { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: .95rem; }
+  .cmt .who { font-weight: 600; margin-right: 4px; }
+  .cmt .when { font-size: .75rem; color: var(--muted); }
+  .cmt .x { width: 26px; height: 26px; font-size: .9rem; }
+  .cmt-form { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .cmt-form input { flex: 1 1 140px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; }
+  .cmt-form button { border: 0; background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 600; }
+
+  .card.dragging { position: fixed; z-index: 20; pointer-events: none; transform: rotate(2deg); box-shadow: 0 14px 34px rgba(0,0,0,.3); }
+  .placeholder { border: 3px dashed var(--accent); border-radius: 12px; background: rgba(47,93,80,.08); }
+  body.is-dragging { user-select: none; cursor: grabbing; }
+
+  .yellow { background: var(--yellow); } .pink { background: var(--pink); } .blue { background: var(--blue); }
+  .green { background: var(--green); } .purple { background: var(--purple); }
+
+  #fab { position: fixed; right: 18px; bottom: 22px; z-index: 6; border: 0; border-radius: 999px; background: var(--accent);
+         color: #fff; font-weight: 600; font-size: 1.05rem; padding: 15px 22px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+
+  /* ---------- dialogs ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 10; background: rgba(20,18,14,.55); display: none;
+             align-items: center; justify-content: center; padding: 16px; }
+  .overlay.open { display: flex; }
+  .sheet { background: var(--surface); border-radius: 16px; width: 100%; max-width: 480px; max-height: 92vh; overflow: auto; padding: 18px; }
+  .sheet h2 { margin: 0 0 14px; font-size: 1.15rem; }
+  .field { display: block; margin-bottom: 12px; }
+  .field > span { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 5px; }
+  .sheet input[type=text], .sheet textarea, .sheet select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; }
+  .sheet textarea { min-height: 110px; resize: vertical; }
+  #pText { transition: background-color .15s; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+  .swatch { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(34,32,27,.25); padding: 0;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+  .swatch[aria-pressed=true] { border: 3px solid var(--ink); box-shadow: 0 0 0 3px #fff inset; }
+  .note { font-size: .82rem; color: var(--muted); margin: 10px 0 4px; }
+  #pPreview { position: relative; margin-bottom: 10px; }
+  #pPreview img { width: 100%; border-radius: 10px; display: block; }
+  #pPreview button { position: absolute; top: 6px; right: 6px; }
+  .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+  .btn { border: 0; border-radius: 10px; padding: 11px 18px; font-weight: 600; }
+  .btn.primary { background: var(--accent); color: #fff; } .btn.primary:disabled { opacity: .55; }
+  .btn.plain { background: #eee9df; }
+  .btn.danger { background: #fbe9e7; color: var(--danger); }
+  .err { color: var(--danger); font-size: .9rem; min-height: 1.2em; margin-top: 6px; }
+  .types { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .types button { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 12px; text-align: left; }
+  .types button[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); }
+  .types b { display: block; }
+  .types small { color: var(--muted); }
+  .toggle { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid #eee8dc; }
+  .toggle input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+  .toggle b { display: block; }
+  .toggle small { color: var(--muted); }
+  .danger-zone { border-top: 1px solid #eee8dc; margin-top: 12px; padding-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  #lightbox img { max-width: 100%; max-height: 90vh; border-radius: 8px; }
+  #present { background: #fff; }
+  #present .inner { text-align: center; max-width: 900px; width: 100%; }
+  #present h2 { font-size: clamp(1.4rem, 4vw, 2.4rem); margin: 0 0 12px; overflow-wrap: anywhere; }
+  #qr { display: inline-block; padding: 12px; background: #fff; }
+  #qr img, #qr canvas { display: block; }
+  .bigcode { font-size: clamp(1.6rem, 6vw, 3.2rem); font-weight: 700; letter-spacing: .2em; margin: 8px 0; }
+  #closePresent { position: absolute; top: 14px; right: 14px; }
+
+  #toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 30; background: #22201b; color: #fff;
+           padding: 10px 16px; border-radius: 10px; font-size: .92rem; max-width: calc(100% - 32px); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  #toast.bad { background: var(--danger); }
+</style>
+</head>
+<body>
+<header>
+  <button class="tbtn" id="backBtn" hidden>← <span class="lbl">Els meus taulers</span></button>
+  <h1 id="title">Class Board</h1>
+  <span id="status"></span>
+  <div class="tools" id="tools" hidden>
+    <button class="tbtn" id="addColBtn" hidden>+ <span class="lbl">Columna</span></button>
+    <button class="tbtn" id="settingsBtn">⚙ <span class="lbl">Configuració</span></button>
+    <button class="tbtn primary" id="presentBtn">Presenta</button>
+  </div>
+</header>
+
+<main>
+  <!-- Teacher: my boards -->
+  <section id="vHome" hidden>
+    <div class="home-head">
+      <div class="who" id="who"></div>
+      <div class="seg" role="group" aria-label="Taulers">
+        <button id="tabActive" class="on">Actius</button>
+        <button id="tabArchived">Arxivats</button>
+      </div>
+      <label class="check" id="allWrap" hidden><input type="checkbox" id="allBoards"> Tots els de l'escola</label>
+      <button class="tbtn primary" id="newBoardBtn">+ Nou tauler</button>
+    </div>
+    <div id="boardList"></div>
+    <p class="center muted" id="homeEmpty" hidden></p>
+    <p class="muted" style="margin-top:24px;font-size:.88rem"><a class="linkish" id="dataLink" target="_blank" hidden>Les meves dades (full de càlcul)</a></p>
+  </section>
+
+  <!-- Student: enter a code -->
+  <section id="vJoin" hidden>
+    <form class="panel" id="joinForm">
+      <h2>Entra al tauler</h2>
+      <div class="muted">Escriu el codi que et dona el professor o la professora.</div>
+      <input id="joinCode" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Codi del tauler">
+      <button class="btn primary" style="width:100%">Entra</button>
+      <div class="err" id="joinErr"></div>
+      <div class="muted" id="joinNote" style="font-size:.85rem;margin-top:10px"></div>
+    </form>
+  </section>
+
+  <!-- Messages (not found, closed, errors) -->
+  <section id="vMsg" hidden>
+    <div class="panel">
+      <h2 id="msgTitle"></h2>
+      <div class="muted" id="msgText"></div>
+      <button class="btn primary" id="msgBtn" style="margin-top:16px">Prova un altre codi</button>
+    </div>
+  </section>
+
+  <!-- Board -->
+  <section id="vBoard" hidden>
+    <div class="banner" id="banner" hidden></div>
+    <div id="wall"></div>
+    <p class="center" id="empty" hidden>Encara no hi ha res. Sigues el primer a publicar!</p>
+  </section>
+</main>
+
+<button id="fab" hidden>+ Publica</button>
+
+<!-- New post -->
+<div class="overlay" id="composer">
+  <form class="sheet" id="composerForm">
+    <h2>Nova publicació</h2>
+    <label class="field" id="pColWrap" hidden><span>Columna</span><select id="pCol"></select></label>
+    <label class="field"><span id="pNameLabel">El teu nom (opcional)</span>
+      <input type="text" id="pName" maxlength="40" autocomplete="off"></label>
+    <label class="field"><span>Publicació</span>
+      <textarea id="pText" maxlength="1000" placeholder="Què vols compartir?"></textarea></label>
+    <div id="pPreview" hidden><img alt="Foto seleccionada"><button type="button" class="tbtn" id="pRmImg">Treu la foto</button></div>
+    <div class="row" style="margin-bottom:14px">
+      <label class="tbtn" for="pFile" style="padding:10px 14px">📷 Afegeix una foto</label>
+      <input type="file" id="pFile" accept="image/*" hidden>
+    </div>
+    <div class="field"><span>Color de la nota</span><div class="swatches" id="swatches" role="group" aria-label="Color de la nota"></div></div>
+    <div class="note">No publiquis dades personals ni fotos de persones.</div>
+    <div class="err" id="pErr"></div>
+    <div class="actions">
+      <button type="button" class="btn plain" id="pCancel">Cancel·la</button>
+      <button class="btn primary" id="pSend">Publica</button>
+    </div>
+  </form>
+</div>
+
+<!-- New board -->
+<div class="overlay" id="newBoard">
+  <form class="sheet" id="newBoardForm">
+    <h2>Nou tauler</h2>
+    <label class="field"><span>Títol</span><input type="text" id="nbTitle" maxlength="80" placeholder="p. ex. A2 · Les meves vacances"></label>
+    <div class="field"><span>Tipus</span>
+      <div class="types" id="nbTypes">
+        <button type="button" data-type="wall" aria-pressed="true"><b>Mur</b><small>Les publicacions en una graella</small></button>
+        <button type="button" data-type="columns" aria-pressed="false"><b>Columnes</b><small>Les publicacions organitzades per columnes</small></button>
+      </div>
+    </div>
+    <label class="field" id="nbColsWrap" hidden><span>Columnes (una per línia)</span>
+      <textarea id="nbCols" placeholder="Abans&#10;Durant&#10;Després" style="min-height:90px"></textarea></label>
+    <div class="err" id="nbErr"></div>
+    <div class="actions">
+      <button type="button" class="btn plain" id="nbCancel">Cancel·la</button>
+      <button class="btn primary" id="nbCreate">Crea el tauler</button>
+    </div>
+  </form>
+</div>
+
+<!-- Board settings -->
+<div class="overlay" id="settings">
+  <form class="sheet" id="settingsForm">
+    <h2>Configuració del tauler</h2>
+    <label class="field"><span>Títol</span><input type="text" id="sTitle" maxlength="80"></label>
+    <div class="field"><span>Tipus</span>
+      <div class="types" id="sTypes">
+        <button type="button" data-type="wall"><b>Mur</b><small>Graella</small></button>
+        <button type="button" data-type="columns"><b>Columnes</b><small>Per columnes</small></button>
+      </div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sLocked"><span><b>Tancat</b><small>Els alumnes no poden publicar ni comentar.</small></span></label>
+    <label class="toggle"><input type="checkbox" id="sApproval"><span><b>Aprovació prèvia</b><small>Les publicacions i els comentaris dels alumnes no es mostren fins que els aproves.</small></span></label>
+    <label class="toggle"><input type="checkbox" id="sNameReq"><span><b>Nom obligatori</b><small>Els alumnes han d'escriure el seu nom.</small></span></label>
+    <label class="toggle"><input type="checkbox" id="sLikes"><span><b>M'agrades</b><small>Els alumnes poden fer m'agrada a les publicacions.</small></span></label>
+    <label class="toggle"><input type="checkbox" id="sComments"><span><b>Comentaris</b><small>Els alumnes poden comentar les publicacions.</small></span></label>
+    <div class="actions">
+      <button type="button" class="btn plain" id="sCancel">Cancel·la</button>
+      <button class="btn primary">Desa</button>
+    </div>
+    <div class="danger-zone">
+      <button type="button" class="btn plain" id="sArchive">Arxiva el tauler</button>
+      <button type="button" class="btn danger" id="sDelete">Elimina el tauler</button>
+    </div>
+  </form>
+</div>
+
+<!-- Present (QR + code) -->
+<div class="overlay" id="present">
+  <button class="tbtn" id="closePresent">✕ Tanca</button>
+  <div class="inner">
+    <h2 id="prTitle"></h2>
+    <div id="qr"></div>
+    <div class="muted">Escaneja el codi QR o entra amb el codi</div>
+    <div class="bigcode" id="prCode"></div>
+    <div class="muted" id="prUrl" style="font-size:.75rem;word-break:break-all;margin:6px auto 12px;max-width:600px"></div>
+    <div class="row" style="justify-content:center">
+      <button class="tbtn" id="copyLink">Copia l'enllaç</button>
+      <button class="tbtn" id="copyJoin">Copia l'enllaç per entrar amb codi</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="lightbox"><img alt=""></div>
+<div id="toast" hidden></div>
+
+<script>
+/* Student page hosted outside Google. Talks to the Class Board app directly,
+   without Google sign-in, so phones with several Google accounts work. */
+const API = 'https://script.google.com/macros/s/AKfycbw26pMux4MpEySQHKuiBHbk7NneH9sw-HKXCLwQCXHv75aBJlOrRYBV0rTlecOhNd0jLg/exec';
+(function () {
+  function call(fn, args, ok, fail) {
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.error) { if (fail) fail(new Error(j.error)); }
+        else if (ok) ok(j.result);
+      })
+      .catch(function () { if (fail) fail(new Error('No hi ha connexió. Torna-ho a provar.')); });
+  }
+  function runner(ok, fail) {
+    return new Proxy({}, { get: function (_, k) {
+      if (k === 'withSuccessHandler') return function (f) { return runner(f, fail); };
+      if (k === 'withFailureHandler') return function (f) { return runner(ok, f); };
+      return function () { call(k, Array.prototype.slice.call(arguments), ok, fail); };
+    } });
+  }
+  function params() {
+    var o = {};
+    new URLSearchParams(location.search).forEach(function (v, k) { o[k] = v; });
+    return o;
+  }
+  window.google = { script: {
+    run: runner(null, null),
+    history: {
+      push: function (state, p) {
+        var q = new URLSearchParams(p || {}).toString();
+        history.pushState(state, '', location.pathname + (q ? '?' + q : ''));
+      },
+      setChangeHandler: function (fn) {
+        window.addEventListener('popstate', function () { fn({ location: { parameter: params() } }); });
+      }
+    }
+  } };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const BOOT = (function () {
+  const b = (new URLSearchParams(location.search).get('b') || '').toUpperCase();
+  return { me: null, email: '', studentUrl: location.origin + location.pathname,
+           view: b ? 'board' : 'join', code: b };
+})();
+const $ = id => document.getElementById(id);
+const COLORS = [
+  { k: 'yellow', n: 'Groc' }, { k: 'pink', n: 'Rosa' }, { k: 'blue', n: 'Blau' },
+  { k: 'green', n: 'Verd' }, { k: 'purple', n: 'Lila' }
+];
+const COLOR_KEYS = COLORS.map(c => c.k);
+
+/* ---------- small helpers ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('cb-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('cb-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+function rid(n) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const a = new Uint8Array(n);
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  let s = '';
+  for (let i = 0; i < n; i++) s += chars.charAt(a[i] % chars.length);
+  return s;
+}
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function btn(cls, text, title, fn) {
+  const b = el('button', cls, text);
+  b.type = 'button';
+  if (title) { b.title = title; b.setAttribute('aria-label', title); }
+  if (fn) b.addEventListener('click', fn);
+  return b;
+}
+function run(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args);
+  });
+}
+function errText(e) { return (e && e.message) || 'Hi ha hagut un error. Torna-ho a provar.'; }
+let toastTimer;
+function toast(msg, bad) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = bad ? 'bad' : '';
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, bad ? 5000 : 3200);
+}
+function setStatus(s) { $('status').textContent = s; }
+function when(t) {
+  const d = new Date(t), now = new Date();
+  const hm = d.toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === now.toDateString() ? hm : d.toLocaleDateString('ca-ES', { day: 'numeric', month: 'numeric' }) + ' ' + hm;
+}
+function open(id) { $(id).classList.add('open'); }
+function close(id) { $(id).classList.remove('open'); }
+
+/* ---------- per-device state ---------- */
+let DEVICE = store.get('device', '');
+if (!DEVICE) { DEVICE = rid(24); store.set('device', DEVICE); }
+const TOK = store.get('tok', {});     // itemId -> secret key (lets this device delete its own items)
+const LIKED = store.get('liked', {}); // postId -> 1
+const PEND = store.get('pend', {});   // itemId -> {b, kind, item}  my items waiting for approval
+function saveTok() { store.set('tok', TOK); }
+function savePend() { store.set('pend', PEND); }
+
+/* ---------- app state ---------- */
+const S = {
+  me: BOOT.me,
+  view: '',
+  id: '',
+  v: '',
+  d: null,          // board payload {meta, posts, comments, pend, teacher}
+  teacher: false
+};
+let busy = 0;                 // writes in flight (polling waits for them)
+let drag = null;
+const openComments = {};      // postId -> true
+const drafts = {};            // postId -> comment draft
+const imgCache = {};          // imgId -> data URL (local uploads and private images)
+const imgEls = {};            // imgId -> <img> reused between renders
+
+/* =================================================================
+   Navigation
+   ================================================================= */
+function show(view) {
+  S.view = view;
+  ['vHome', 'vJoin', 'vMsg', 'vBoard'].forEach(v => { $(v).hidden = v.toLowerCase() !== 'v' + view; });
+  const inBoard = view === 'board';
+  $('tools').hidden = !(inBoard && S.teacher);
+  $('backBtn').hidden = !S.me || view === 'home';
+  $('fab').hidden = true;
+  if (!inBoard) { stopPoll(); setStatus(''); }
+  if (view === 'home') setTitle('Els meus taulers');
+  if (view === 'join') setTitle('Class Board');
+}
+function setTitle(t) { $('title').textContent = t; document.title = t + ' · Class Board'; }
+
+function go(params) {
+  try { google.script.history.push(params, params); } catch (e) {}
+  route(params);
+}
+function route(p) {
+  const code = String((p && p.b) || '').toUpperCase();
+  if (code) openBoard(code);
+  else if (S.me) showHome();
+  else showJoin();
+}
+try {
+  google.script.history.setChangeHandler(e => route((e && e.location && e.location.parameter) || {}));
+} catch (e) {}
+
+$('backBtn').onclick = () => go({});
+
+/* =================================================================
+   Home (teacher)
+   ================================================================= */
+let HOME = null, homeTab = 'actiu';
+function showHome(data) {
+  show('home');
+  $('who').textContent = S.me ? S.me.email : '';
+  $('allWrap').hidden = !(S.me && S.me.admin);
+  if (data) return renderHome(data);
+  if (HOME) renderHome(HOME);
+  else $('boardList').textContent = 'Carregant…';
+  loadHome();
+}
+function loadHome() {
+  run('listBoards', $('allBoards').checked)
+    .then(json => { HOME = JSON.parse(json); if (S.view === 'home') renderHome(HOME); })
+    .catch(e => toast(errText(e), true));
+}
+function renderHome(d) {
+  if (!d) return;   // still loading; loadHome() will render
+  HOME = d;
+  const list = $('boardList');
+  list.textContent = '';
+  $('tabActive').classList.toggle('on', homeTab === 'actiu');
+  $('tabArchived').classList.toggle('on', homeTab === 'arxivat');
+  if (d.sheetUrl) { $('dataLink').href = d.sheetUrl; $('dataLink').hidden = false; }
+  const boards = d.boards.filter(b => b.status === homeTab);
+  $('homeEmpty').hidden = boards.length > 0;
+  $('homeEmpty').textContent = homeTab === 'actiu'
+    ? 'Encara no tens cap tauler. Crea\'n un amb «+ Nou tauler».'
+    : 'No tens cap tauler arxivat.';
+  boards.forEach(b => {
+    const card = el('div', 'bcard');
+    const openBtn = btn('open', '', 'Obre ' + b.title, () => go({ b: b.id }));
+    openBtn.appendChild(el('h3', '', b.title));
+    const sub = (b.type === 'columns' ? 'Columnes' : 'Mur') + ' · ' + b.id + ' · ' +
+      new Date(b.created).toLocaleDateString('ca-ES');
+    openBtn.appendChild(el('div', 'sub', sub));
+    if (d.all) openBtn.appendChild(el('div', 'sub', b.owner));
+    card.appendChild(openBtn);
+    const acts = el('div', 'acts');
+    acts.appendChild(btn('', 'Obre', '', () => go({ b: b.id })));
+    if (b.status === 'actiu') acts.appendChild(btn('', 'Arxiva', '', () => setBoardStatus(b, 'arxivat')));
+    else acts.appendChild(btn('', 'Recupera', '', () => setBoardStatus(b, 'actiu')));
+    acts.appendChild(btn('danger', 'Elimina', '', () => removeBoard(b)));
+    card.appendChild(acts);
+    list.appendChild(card);
+  });
+}
+function setBoardStatus(b, status) {
+  b.status = status;
+  renderHome(HOME);
+  toast(status === 'arxivat' ? 'Tauler arxivat.' : 'Tauler recuperat.');
+  run('setBoardStatus', b.id, status).catch(e => { toast(errText(e), true); loadHome(); });
+}
+function removeBoard(b) {
+  if (!confirm('Vols eliminar el tauler «' + b.title + '»? S\'esborraran totes les publicacions i fotos. No es pot desfer.')) return;
+  HOME.boards = HOME.boards.filter(x => x !== b);
+  renderHome(HOME);
+  run('deleteBoard', b.id).then(() => toast('Tauler eliminat.')).catch(e => { toast(errText(e), true); loadHome(); });
+}
+function setHomeTab(t) {
+  homeTab = t;
+  $('tabActive').classList.toggle('on', t === 'actiu');
+  $('tabArchived').classList.toggle('on', t === 'arxivat');
+  renderHome(HOME);
+}
+$('tabActive').onclick = () => setHomeTab('actiu');
+$('tabArchived').onclick = () => setHomeTab('arxivat');
+$('allBoards').onchange = () => { $('boardList').textContent = 'Carregant…'; loadHome(); };
+
+/* ---------- new board ---------- */
+let nbType = 'wall';
+function setTypeButtons(box, type) {
+  box.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
+}
+$('newBoardBtn').onclick = () => {
+  $('nbTitle').value = ''; $('nbCols').value = ''; $('nbErr').textContent = '';
+  nbType = 'wall'; setTypeButtons($('nbTypes'), nbType); $('nbColsWrap').hidden = true;
+  $('nbCreate').disabled = false; $('nbCreate').textContent = 'Crea el tauler';
+  open('newBoard'); $('nbTitle').focus();
+};
+$('nbTypes').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  nbType = b.dataset.type; setTypeButtons($('nbTypes'), nbType);
+  $('nbColsWrap').hidden = nbType !== 'columns';
+};
+$('nbCancel').onclick = () => close('newBoard');
+$('newBoardForm').onsubmit = e => {
+  e.preventDefault();
+  const title = $('nbTitle').value.trim();
+  if (!title) { $('nbErr').textContent = 'Posa un títol al tauler.'; return; }
+  const cols = $('nbCols').value.split('\n').map(s => s.trim()).filter(Boolean);
+  $('nbCreate').disabled = true; $('nbCreate').textContent = 'Creant…';
+  run('createBoard', title, nbType, cols)
+    .then(id => { close('newBoard'); HOME = null; go({ b: id }); })
+    .catch(err => { $('nbErr').textContent = errText(err); $('nbCreate').disabled = false; $('nbCreate').textContent = 'Crea el tauler'; });
+};
+
+/* =================================================================
+   Join (students without a QR code)
+   ================================================================= */
+function showJoin() {
+  show('join');
+  $('joinErr').textContent = '';
+  $('joinNote').textContent = BOOT.email && !S.me
+    ? 'Has entrat com a ' + BOOT.email + ', que no té accés de professorat. Si ets docent, demana accés al coordinador digital.'
+    : '';
+  setTimeout(() => $('joinCode').focus(), 50);
+}
+$('joinForm').onsubmit = e => {
+  e.preventDefault();
+  const code = $('joinCode').value.toUpperCase().split('').filter(ch => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.indexOf(ch) >= 0).join('');
+  if (code.length !== 6) { $('joinErr').textContent = 'El codi té 6 lletres i números.'; return; }
+  go({ b: code });
+};
+
+function showMsg(kind) {
+  show('msg');
+  const texts = {
+    notfound: ['No hem trobat el tauler', 'Comprova el codi o l\'enllaç.'],
+    closed: ['Aquest tauler està tancat', 'El professor o la professora l\'ha arxivat.'],
+    error: ['No s\'ha pogut carregar', 'Comprova la connexió i torna-ho a provar.']
+  };
+  const t = texts[kind] || texts.error;
+  setTitle(t[0]);
+  $('msgTitle').textContent = t[0];
+  $('msgText').textContent = t[1];
+  $('msgBtn').textContent = S.me ? 'Torna als meus taulers' : 'Prova un altre codi';
+}
+$('msgBtn').onclick = () => go({});
+
+/* =================================================================
+   Board
+   ================================================================= */
+function openBoard(code) {
+  S.id = code; S.v = ''; S.d = null; S.teacher = false;
+  show('board');
+  setTitle('Carregant…');
+  $('wall').textContent = ''; $('banner').hidden = true; $('empty').hidden = true;
+  run('poll', code, '')
+    .then(json => {
+      if (S.id !== code) return;
+      const d = JSON.parse(json);
+      if (d.error) return showMsg(d.error);
+      applyData(d);
+      startPoll();
+    })
+    .catch(() => { if (S.id === code) showMsg('error'); });
+}
+
+function applyData(d) {
+  S.v = d.v;
+  S.d = d;
+  S.teacher = d.teacher;
+  // Forget my pending items once they're approved or rejected.
+  const stillPending = {};
+  (d.pend || []).forEach(id => { stillPending[id] = true; });
+  let changed = false;
+  Object.keys(PEND).forEach(id => {
+    if (PEND[id].b === S.id && !stillPending[id]) { delete PEND[id]; changed = true; }
+  });
+  if (changed) savePend();
+  render();
+}
+
+/* ---------- polling ---------- */
+let pollTimer = null, polling = false, lastChange = Date.now();
+function startPoll() { lastChange = Date.now(); schedule(nextDelay()); }
+function stopPoll() { clearTimeout(pollTimer); pollTimer = null; }
+function schedule(ms) { clearTimeout(pollTimer); pollTimer = setTimeout(poll, ms); }
+function nextDelay() {
+  const idle = Date.now() - lastChange > 60000;
+  const base = S.teacher ? (idle ? 8000 : 4000) : (idle ? 15000 : 8000);
+  return base + Math.random() * 1000;
+}
+function pollSoon() { schedule(250); }
+function poll() {
+  if (S.view !== 'board' || !S.id) return;
+  if (document.hidden) return;                       // resumes on visibilitychange
+  if (busy || drag || polling) { schedule(1200); return; }
+  polling = true;
+  const id = S.id;
+  run('poll', id, S.v)
+    .then(json => {
+      polling = false;
+      if (S.id !== id) return;
+      setStatus('');
+      if (json && !busy && !drag) {
+        const d = JSON.parse(json);
+        if (d.error) { stopPoll(); return showMsg(d.error); }
+        lastChange = Date.now();
+        applyData(d);
+      }
+      schedule(nextDelay());
+    })
+    .catch(() => { polling = false; setStatus('Reconnectant…'); schedule(5000); });
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && S.view === 'board') { lastChange = Date.now(); pollSoon(); }
+});
+// If someone is typing a comment when the board refreshes, put the cursor back where it was.
+function rememberFocus() {
+  const a = document.activeElement;
+  if (!a || !a.classList || !a.classList.contains('cmt-input')) return null;
+  return { post: a.dataset.post, kind: a.dataset.kind, start: a.selectionStart, end: a.selectionEnd };
+}
+function restoreFocus(f) {
+  if (!f) return;
+  const i = document.querySelector('.cmt-input[data-post="' + f.post + '"][data-kind="' + f.kind + '"]');
+  if (!i) return;
+  i.focus({ preventScroll: true });
+  try { i.setSelectionRange(f.start, f.end); } catch (e) {}
+}
+
+// Every change is shown immediately, then saved. Polling pauses until the save finishes.
+function write(promise, onOk) {
+  busy++;
+  return promise
+    .then(r => { busy--; if (onOk) onOk(r); pollSoon(); return r; })
+    .catch(e => { busy--; toast(errText(e), true); S.v = ''; pollSoon(); });
+}
+
+/* ---------- rendering ---------- */
+function isColumns() { return S.d && S.d.meta.type === 'columns'; }
+function visibleColumns() {
+  const cols = S.d.meta.columns || [];
+  return cols.length ? cols : [{ id: '', name: 'Publicacions' }];
+}
+
+// Posts to show: the board's posts plus my own posts still waiting for approval.
+function postsToShow() {
+  const list = S.d.posts.slice();
+  if (!S.teacher) {
+    Object.keys(PEND).forEach(id => {
+      const p = PEND[id];
+      if (p.b === S.id && p.kind === 'post' && !list.some(x => x.id === id)) list.unshift(p.item);
+    });
+  }
+  return list;
+}
+function commentsFor(postId) {
+  const list = S.d.comments.filter(c => c.post === postId);
+  if (!S.teacher) {
+    Object.keys(PEND).forEach(id => {
+      const c = PEND[id];
+      if (c.b === S.id && c.kind === 'comment' && c.item.post === postId && !list.some(x => x.id === id)) list.push(c.item);
+    });
+  }
+  return list;
+}
+
+function render() {
+  if (!S.d) return;
+  const focus = rememberFocus();
+  renderBoard();
+  restoreFocus(focus);
+}
+
+function renderBoard() {
+  const m = S.d.meta, T = S.teacher;
+  setTitle(m.title);
+  $('tools').hidden = !T;
+  $('addColBtn').hidden = !(T && m.type === 'columns');
+  $('fab').hidden = m.locked && !T;
+
+  const notes = [];
+  if (m.status === 'arxivat') notes.push('Aquest tauler està arxivat: només tu el pots veure.');
+  if (m.locked) notes.push(T ? 'Tauler tancat: els alumnes no poden publicar ni comentar.' : 'Aquest tauler està tancat. Ja no s\'hi pot publicar.');
+  if (m.approval && !T) notes.push('El professorat ha d\'aprovar les publicacions abans que es vegin.');
+  if (m.approval && T) {
+    const n = S.d.posts.filter(p => p.status === 'pending').length + S.d.comments.filter(c => c.status === 'pending').length;
+    if (n) notes.push(n === 1 ? 'Tens 1 element pendent d\'aprovació.' : 'Tens ' + n + ' elements pendents d\'aprovació.');
+  }
+  $('banner').hidden = !notes.length;
+  $('banner').textContent = notes.join(' ');
+
+  const wall = $('wall');
+  const scrollX = wall.scrollLeft;
+  wall.textContent = '';
+  const posts = postsToShow();
+
+  if (m.type !== 'columns') {
+    wall.className = 'grid';
+    $('empty').hidden = posts.length > 0;
+    posts.forEach(p => wall.appendChild(makeCard(p)));
+    return;
+  }
+
+  wall.className = 'columns';
+  $('empty').hidden = true;
+  const cols = visibleColumns();
+  const known = {};
+  cols.forEach(c => { known[c.id] = true; });
+  cols.forEach((c, i) => {
+    const col = el('section', 'col');
+    const head = el('div', 'col-head');
+    head.appendChild(el('h2', '', c.name));
+    if (T && m.columns.length) {
+      head.appendChild(btn('ibtn', '←', 'Mou a l\'esquerra', () => moveColumn(i, -1)));
+      head.appendChild(btn('ibtn', '→', 'Mou a la dreta', () => moveColumn(i, 1)));
+      head.appendChild(btn('ibtn', '✎', 'Canvia el nom', () => renameColumn(i)));
+      head.appendChild(btn('ibtn', '✕', 'Elimina la columna', () => deleteColumn(i)));
+    }
+    col.appendChild(head);
+    const body = el('div', 'col-body');
+    body.dataset.col = c.id;
+    posts.filter(p => (known[p.col] ? p.col : cols[0].id) === c.id).forEach(p => body.appendChild(makeCard(p)));
+    col.appendChild(body);
+    if (!m.locked || T) col.appendChild(btn('col-add', '+ Afegeix', '', () => openComposer(c.id)));
+    wall.appendChild(col);
+  });
+  wall.scrollLeft = scrollX;
+}
+
+function makeCard(p) {
+  const m = S.d.meta, T = S.teacher;
+  const card = el('article', 'card ' + (COLOR_KEYS.includes(p.color) ? p.color : 'yellow'));
+  card.dataset.id = p.id;
+  if (p.status === 'pending') card.classList.add('pending');
+  if (p.sending) card.classList.add('sending');
+
+  const top = el('div', 'card-top');
+  if (T && !p.sending) {
+    const h = btn('handle', '⠿ mou', 'Arrossega per moure');
+    h.addEventListener('pointerdown', e => startDrag(e, card));
+    top.appendChild(h);
+  }
+  if (p.status === 'pending') top.appendChild(el('span', 'chip', 'Pendent d\'aprovació'));
+  if (p.role === 'teacher') top.appendChild(el('span', 'chip teacher', 'Professorat'));
+  top.appendChild(el('span', 'grow'));
+  if ((T || TOK[p.id]) && !p.sending) top.appendChild(btn('x', '✕', 'Esborra', () => removeItem(p, 'post')));
+  if (top.children.length > 1) card.appendChild(top);
+
+  if (p.img || p.localImg) card.appendChild(makeImg(p));
+  if (p.text) card.appendChild(el('div', 'text', p.text));
+  card.appendChild(el('div', 'meta', (p.name || 'Anònim') + ' · ' + (p.sending ? 'Publicant…' : when(p.time))));
+
+  if (T && p.status === 'pending') {
+    const row = el('div', 'approve');
+    row.appendChild(btn('yes', 'Aprova', '', () => approveItem(p)));
+    row.appendChild(btn('no', 'Rebutja', '', () => removeItem(p, 'post', true)));
+    card.appendChild(row);
+  }
+
+  const live = p.status === 'ok' && !p.sending;
+  if (live && (m.likes || m.comments || T)) {
+    const comments = commentsFor(p.id);
+    const showLikes = m.likes;
+    const showComments = m.comments || comments.length > 0;
+    if (showLikes || showComments) {
+      const row = el('div', 'acts-row');
+      if (showLikes) {
+        const liked = !!LIKED[p.id];
+        const b = btn('pill' + (liked ? ' liked' : ''), (liked ? '♥ ' : '♡ ') + (p.likes || 0), liked ? 'Ja no m\'agrada' : 'M\'agrada', () => toggleLike(p));
+        b.setAttribute('aria-pressed', String(liked));
+        row.appendChild(b);
+      }
+      if (showComments) {
+        const b = btn('pill', '💬 ' + comments.length, 'Comentaris', () => {
+          openComments[p.id] = !openComments[p.id];
+          render();
+          if (openComments[p.id]) focusComment(p.id);
+        });
+        b.setAttribute('aria-expanded', String(!!openComments[p.id]));
+        row.appendChild(b);
+      }
+      card.appendChild(row);
+      if (showComments && openComments[p.id]) card.appendChild(commentsPanel(p, comments));
+    }
+  }
+  return card;
+}
+
+function makeImg(p) {
+  const key = p.img || p.id;
+  let img = imgEls[key];
+  if (img) return img;
+  img = document.createElement('img');
+  img.alt = 'Foto de ' + (p.name || 'un alumne');
+  img.loading = 'lazy';
+  img.addEventListener('click', () => {
+    const big = $('lightbox').querySelector('img');
+    big.src = (p.pub && !imgCache[p.img]) ? thumb(p.img, 1600) : img.src;
+    open('lightbox');
+  });
+  const fallback = () => {
+    if (imgCache[p.img]) { img.src = imgCache[p.img]; return; }
+    run('getImage', S.id, p.img).then(d => { imgCache[p.img] = d; img.src = d; }).catch(() => {});
+  };
+  if (p.localImg) img.src = p.localImg;
+  else if (imgCache[p.img]) img.src = imgCache[p.img];
+  else if (p.pub) { img.onerror = () => { img.onerror = null; fallback(); }; img.src = thumb(p.img, 800); }
+  else fallback();
+  if (p.img) imgEls[p.img] = img;
+  return img;
+}
+function thumb(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
+
+function commentsPanel(p, list) {
+  const m = S.d.meta, T = S.teacher;
+  const box = el('div', 'comments');
+  if (!list.length) box.appendChild(el('div', 'muted', 'Encara no hi ha comentaris.'));
+  list.forEach(c => {
+    const row = el('div', 'cmt');
+    const body = el('div', 'body');
+    body.appendChild(el('span', 'who', (c.role === 'teacher' ? '🎓 ' : '') + (c.name || 'Anònim')));
+    body.appendChild(document.createTextNode(c.text + ' '));
+    body.appendChild(el('span', 'when', c.sending ? 'Enviant…' : (c.status === 'pending' ? 'Pendent d\'aprovació' : when(c.time))));
+    row.appendChild(body);
+    if (T && c.status === 'pending') row.appendChild(btn('x', '✓', 'Aprova', () => approveItem(c)));
+    if ((T || TOK[c.id]) && !c.sending) row.appendChild(btn('x', '✕', 'Esborra', () => removeItem(c, 'comment')));
+    box.appendChild(row);
+  });
+  if ((m.comments && !m.locked) || T) {
+    const form = el('form', 'cmt-form');
+    const needName = !T && !store.get('name', '');
+    let nameInput = null;
+    if (needName) {
+      nameInput = el('input', 'cmt-input');
+      nameInput.placeholder = m.nameReq ? 'El teu nom' : 'El teu nom (opcional)';
+      nameInput.maxLength = 40;
+      nameInput.dataset.post = p.id;
+      nameInput.dataset.kind = 'name';
+      nameInput.value = drafts['name:' + p.id] || '';
+      nameInput.addEventListener('input', () => { drafts['name:' + p.id] = nameInput.value; });
+      form.appendChild(nameInput);
+    }
+    const input = el('input', 'cmt-input');
+    input.placeholder = 'Escriu un comentari…';
+    input.maxLength = 500;
+    input.value = drafts[p.id] || '';
+    input.dataset.post = p.id;
+    input.dataset.kind = 'text';
+    input.addEventListener('input', () => { drafts[p.id] = input.value; });
+    form.appendChild(input);
+    form.appendChild(el('button', '', 'Envia'));
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (nameInput && nameInput.value.trim()) store.set('name', nameInput.value.trim());
+      sendComment(p, input.value);
+    });
+    box.appendChild(form);
+  }
+  return box;
+}
+function focusComment(postId) {
+  const i = document.querySelector('.cmt-input[data-post="' + postId + '"][data-kind="text"]');
+  if (i) i.focus({ preventScroll: true });
+}
+
+/* ---------- actions ---------- */
+function myName() { return S.teacher ? (S.me && S.me.name) || '' : store.get('name', ''); }
+
+function sendComment(p, text) {
+  text = text.trim();
+  if (!text) return;
+  const m = S.d.meta;
+  const name = myName();
+  if (m.nameReq && !S.teacher && !name) { toast('Escriu el teu nom.', true); return; }
+  const c = { id: 'c' + rid(16), post: p.id, time: Date.now(), name, text, status: 'ok', role: S.teacher ? 'teacher' : 'student', sending: true };
+  const token = rid(24);
+  TOK[c.id] = token; saveTok();
+  S.d.comments.push(c);
+  drafts[p.id] = '';
+  render();
+  focusComment(p.id);
+  write(run('addComment', S.id, { id: c.id, token, post: p.id, name, text }), r => {
+    c.sending = false;
+    if (r.status === 'pending') {
+      c.status = 'pending';
+      render();
+      PEND[c.id] = { b: S.id, kind: 'comment', item: Object.assign({}, c, { status: 'pending', sending: false }) };
+      savePend();
+      toast('Comentari enviat. Es veurà quan el professorat l\'aprovi.');
+    }
+  });
+}
+
+function toggleLike(p) {
+  const on = !LIKED[p.id];
+  if (on) LIKED[p.id] = 1; else delete LIKED[p.id];
+  store.set('liked', LIKED);
+  p.likes = Math.max(0, (p.likes || 0) + (on ? 1 : -1));
+  render();
+  write(run('toggleLike', S.id, p.id, DEVICE, on), n => { p.likes = n; });
+}
+
+function removeItem(item, kind, reject) {
+  const q = reject ? 'Vols rebutjar-ho? S\'esborrarà.' : (kind === 'post' ? 'Vols esborrar aquesta publicació?' : 'Vols esborrar aquest comentari?');
+  if (!confirm(q)) return;
+  if (kind === 'post') S.d.posts = S.d.posts.filter(x => x.id !== item.id);
+  else S.d.comments = S.d.comments.filter(x => x.id !== item.id);
+  if (PEND[item.id]) { delete PEND[item.id]; savePend(); }
+  render();
+  write(run('deleteItem', S.id, item.id, TOK[item.id] || ''));
+}
+
+function approveItem(item) {
+  item.status = 'ok';
+  render();
+  write(run('approve', S.id, item.id));
+}
+
+/* ---------- settings & columns (teacher) ---------- */
+function settingsFrom(m) {
+  return { title: m.title, type: m.type, columns: m.columns, locked: m.locked, approval: m.approval,
+           nameReq: m.nameReq, likes: m.likes, comments: m.comments };
+}
+function saveSettings(onOk) {
+  render();
+  return write(run('saveSettings', S.id, settingsFrom(S.d.meta)), onOk);
+}
+function newColumnId() { return 'c' + Date.now().toString(36) + rid(4); }
+
+// Posts without a saved column are only shown in the first column.
+// Save their column before columns move, so they stay put.
+function pinColumns() {
+  const items = layoutItems();
+  const byId = {};
+  S.d.posts.forEach(p => { byId[p.id] = p; });
+  const loose = items.some(it => byId[it.id] && byId[it.id].col !== it.col);
+  items.forEach(it => { if (byId[it.id]) byId[it.id].col = it.col; });
+  return loose ? run('reorder', S.id, items) : Promise.resolve();
+}
+function columnChange(fn) {
+  if (!isColumns()) return;
+  busy++;
+  const pinned = pinColumns();
+  fn(S.d.meta.columns);
+  render();
+  pinned
+    .then(() => run('saveSettings', S.id, settingsFrom(S.d.meta)))
+    .then(() => { busy--; pollSoon(); })
+    .catch(e => { busy--; toast(errText(e), true); S.v = ''; pollSoon(); });
+}
+$('addColBtn').onclick = () => {
+  const name = prompt('Nom de la columna:');
+  if (!name || !name.trim()) return;
+  columnChange(cols => cols.push({ id: newColumnId(), name: name.trim().slice(0, 60) }));
+};
+function renameColumn(i) {
+  const c = S.d.meta.columns[i];
+  const name = prompt('Nou nom de la columna:', c.name);
+  if (!name || !name.trim()) return;
+  columnChange(() => { c.name = name.trim().slice(0, 60); });
+}
+function deleteColumn(i) {
+  const c = S.d.meta.columns[i];
+  if (!confirm('Vols eliminar la columna «' + c.name + '»? Les seves publicacions passaran a la primera columna.')) return;
+  columnChange(cols => cols.splice(i, 1));
+}
+function moveColumn(i, dir) {
+  const j = i + dir;
+  const cols = S.d.meta.columns;
+  if (j < 0 || j >= cols.length) return;
+  columnChange(cols => { const t = cols[i]; cols[i] = cols[j]; cols[j] = t; });
+}
+
+let sType = 'wall';
+$('settingsBtn').onclick = () => {
+  const m = S.d.meta;
+  $('sTitle').value = m.title;
+  sType = m.type; setTypeButtons($('sTypes'), sType);
+  $('sLocked').checked = m.locked; $('sApproval').checked = m.approval; $('sNameReq').checked = m.nameReq;
+  $('sLikes').checked = m.likes; $('sComments').checked = m.comments;
+  $('sArchive').textContent = m.status === 'arxivat' ? 'Recupera el tauler' : 'Arxiva el tauler';
+  open('settings');
+};
+$('sTypes').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  sType = b.dataset.type; setTypeButtons($('sTypes'), sType);
+};
+$('sCancel').onclick = () => close('settings');
+$('settingsForm').onsubmit = e => {
+  e.preventDefault();
+  const m = S.d.meta;
+  m.title = $('sTitle').value.trim() || m.title;
+  m.type = sType;
+  if (m.type === 'columns' && !m.columns.length) m.columns = [{ id: newColumnId(), name: 'Columna 1' }];
+  m.locked = $('sLocked').checked; m.approval = $('sApproval').checked; m.nameReq = $('sNameReq').checked;
+  m.likes = $('sLikes').checked; m.comments = $('sComments').checked;
+  close('settings');
+  HOME = null;
+  saveSettings(() => toast('Configuració desada.'));
+};
+$('sArchive').onclick = () => {
+  const m = S.d.meta;
+  const status = m.status === 'arxivat' ? 'actiu' : 'arxivat';
+  m.status = status;
+  close('settings');
+  HOME = null;
+  render();
+  write(run('setBoardStatus', S.id, status), () => toast(status === 'arxivat' ? 'Tauler arxivat. Els alumnes ja no hi poden entrar.' : 'Tauler recuperat.'));
+};
+$('sDelete').onclick = () => {
+  const m = S.d.meta;
+  if (!confirm('Vols eliminar el tauler «' + m.title + '»? S\'esborraran totes les publicacions i fotos. No es pot desfer.')) return;
+  close('settings');
+  const id = S.id;
+  HOME = null;
+  go({});
+  run('deleteBoard', id).then(() => { toast('Tauler eliminat.'); if (S.view === 'home') loadHome(); })
+    .catch(e => toast(errText(e), true));
+};
+
+/* ---------- present (QR + code) ---------- */
+function boardLink() { return BOOT.studentUrl + '?b=' + S.id; }
+$('presentBtn').onclick = () => {
+  $('prTitle').textContent = S.d.meta.title;
+  $('prCode').textContent = S.id;
+  $('qr').textContent = '';
+  $('prUrl').textContent = BOOT.studentUrl ? boardLink() : '';
+  if (!BOOT.studentUrl) {
+    $('qr').textContent = 'Falta l\'enllaç dels alumnes. Enganxa\'l al full Administració › Configuració › url_alumnes i torna a carregar aquesta pàgina.';
+    open('present');
+    return;
+  }
+  const size = Math.max(160, Math.min(440, window.innerWidth - 80, window.innerHeight - 330));
+  if (window.QRCode) new QRCode($('qr'), { text: boardLink(), width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+  else $('qr').textContent = boardLink();
+  open('present');
+};
+$('closePresent').onclick = () => close('present');
+function copy(text, button, label) {
+  const done = () => { button.textContent = 'Copiat!'; setTimeout(() => { button.textContent = label; }, 1800); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done).catch(() => prompt('Copia l\'enllaç:', text));
+  else prompt('Copia l\'enllaç:', text);
+}
+$('copyLink').onclick = () => copy(boardLink(), $('copyLink'), 'Copia l\'enllaç');
+$('copyJoin').onclick = () => copy(BOOT.studentUrl, $('copyJoin'), 'Copia l\'enllaç per entrar amb codi');
+
+/* ---------- lightbox, escape ---------- */
+$('lightbox').onclick = () => close('lightbox');
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  ['lightbox', 'present', 'composer', 'settings', 'newBoard'].forEach(close);
+});
+
+/* =================================================================
+   Composer
+   ================================================================= */
+let pColor = store.get('color', COLORS[Math.floor(Math.random() * COLORS.length)].k);
+let imageData = '';
+COLORS.forEach(c => {
+  const b = btn('swatch ' + c.k, '', c.n, () => setColor(c.k));
+  b.dataset.color = c.k;
+  $('swatches').appendChild(b);
+});
+function setColor(k) {
+  pColor = k;
+  store.set('color', k);
+  document.querySelectorAll('#swatches .swatch').forEach(b => {
+    const on = b.dataset.color === k;
+    b.setAttribute('aria-pressed', String(on));
+    b.textContent = on ? '✓' : '';
+  });
+  $('pText').style.backgroundColor = 'var(--' + k + ')';
+}
+setColor(COLOR_KEYS.includes(pColor) ? pColor : 'yellow');
+
+function openComposer(colId) {
+  const m = S.d.meta;
+  const pick = $('pCol');
+  pick.textContent = '';
+  if (m.type === 'columns') {
+    visibleColumns().forEach(c => {
+      const o = el('option', '', c.name);
+      o.value = c.id;
+      pick.appendChild(o);
+    });
+    if (colId != null) pick.value = colId;
+  }
+  $('pColWrap').hidden = m.type !== 'columns';
+  $('pName').value = myName();
+  $('pName').closest('.field').hidden = S.teacher;
+  $('pNameLabel').textContent = m.nameReq ? 'El teu nom' : 'El teu nom (opcional)';
+  $('pErr').textContent = '';
+  open('composer');
+  setTimeout(() => $('pText').focus(), 50);
+}
+$('fab').onclick = () => openComposer(null);
+$('pCancel').onclick = () => close('composer');
+
+$('pFile').onchange = async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  $('pErr').textContent = 'Preparant la foto…';
+  try {
+    imageData = await shrink(f);
+    $('pPreview').querySelector('img').src = imageData;
+    $('pPreview').hidden = false;
+    $('pErr').textContent = '';
+  } catch (err) { $('pErr').textContent = err.message; }
+};
+$('pRmImg').onclick = () => { imageData = ''; $('pPreview').hidden = true; };
+
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s);
+      c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => reject(new Error('No s\'ha pogut llegir la foto. Prova amb un JPG o PNG.'));
+    img.src = url;
+  });
+}
+
+$('composerForm').onsubmit = e => {
+  e.preventDefault();
+  const m = S.d.meta;
+  const text = $('pText').value.trim();
+  const name = S.teacher ? myName() : $('pName').value.trim();
+  if (!text && !imageData) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto.'; return; }
+  if (m.nameReq && !S.teacher && !name) { $('pErr').textContent = 'Escriu el teu nom.'; $('pName').focus(); return; }
+  if (!S.teacher) store.set('name', name);
+  const col = m.type === 'columns' ? $('pCol').value : '';
+  const token = rid(24);
+  const p = {
+    id: 'p' + rid(16), time: Date.now(), name, text, img: '', localImg: imageData, pub: false, color: pColor,
+    col, status: 'ok', role: S.teacher ? 'teacher' : 'student', likes: 0, sending: true
+  };
+  TOK[p.id] = token; saveTok();
+  S.d.posts.unshift(p);
+  const image = imageData;
+  $('pText').value = ''; imageData = ''; $('pPreview').hidden = true;
+  close('composer');
+  render();
+  busy++;
+  run('addPost', S.id, { id: p.id, token, name, text, image, color: pColor, col })
+    .then(r => {
+      busy--;
+      p.sending = false;
+      if (r.img) { p.img = r.img; imgCache[r.img] = image; }
+      if (r.status === 'pending') {
+        PEND[p.id] = { b: S.id, kind: 'post', item: Object.assign({}, p, { status: 'pending', localImg: image }) };
+        savePend();
+        toast('Publicat! Es veurà quan el professorat ho aprovi.');
+      }
+      pollSoon();
+    })
+    .catch(err => {
+      busy--;
+      S.d.posts = S.d.posts.filter(x => x !== p);
+      render();
+      // Give the post back so nothing is lost.
+      $('pText').value = text;
+      if (image) { imageData = image; $('pPreview').querySelector('img').src = image; $('pPreview').hidden = false; }
+      openComposer(col || null);
+      $('pErr').textContent = errText(err);
+      S.v = ''; pollSoon();
+    });
+};
+
+/* =================================================================
+   Drag to reorder (teacher)
+   ================================================================= */
+function layoutItems() {
+  const items = [];
+  const byId = {};
+  S.d.posts.forEach(p => { byId[p.id] = p; });
+  if (!isColumns()) {
+    $('wall').querySelectorAll('.card').forEach(c => {
+      if (byId[c.dataset.id]) items.push({ id: c.dataset.id, col: byId[c.dataset.id].col || '' });
+    });
+    return items;
+  }
+  $('wall').querySelectorAll('.col-body').forEach(body => {
+    body.querySelectorAll('.card').forEach(c => {
+      if (byId[c.dataset.id]) items.push({ id: c.dataset.id, col: body.dataset.col });
+    });
+  });
+  return items;
+}
+
+function startDrag(e, card) {
+  if (drag || (e.button !== undefined && e.button > 0)) return;
+  e.preventDefault();
+  const r = card.getBoundingClientRect();
+  const ph = el('div', 'placeholder');
+  ph.style.height = r.height + 'px';
+  card.parentNode.insertBefore(ph, card);
+  const before = JSON.stringify(layoutItems());
+  card.classList.add('dragging');
+  card.style.width = r.width + 'px';
+  document.body.appendChild(card);
+  document.body.classList.add('is-dragging');
+  drag = { card, ph, before, dx: e.clientX - r.left, dy: e.clientY - r.top, x: e.clientX, y: e.clientY };
+  drag.timer = setInterval(autoScroll, 16);
+  moveDrag(e);
+  window.addEventListener('pointermove', moveDrag);
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+}
+
+function moveDrag(e) {
+  if (!drag) return;
+  e.preventDefault();
+  drag.x = e.clientX; drag.y = e.clientY;
+  drag.card.style.left = (e.clientX - drag.dx) + 'px';
+  drag.card.style.top = (e.clientY - drag.dy) + 'px';
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  if (!target) return;
+  const over = target.closest('#wall .card');
+  if (over) {
+    const box = over.parentNode, tr = over.getBoundingClientRect();
+    const vertical = tr.width > box.clientWidth * 0.7;
+    const after = vertical ? e.clientY > tr.top + tr.height / 2 : e.clientX > tr.left + tr.width / 2;
+    const ref = after ? over.nextSibling : over;
+    if (ref !== drag.ph) box.insertBefore(drag.ph, ref);
+    return;
+  }
+  const col = target.closest('#wall .col');
+  if (!col) return;
+  const body = col.querySelector('.col-body');
+  const cards = body.querySelectorAll('.card');
+  if (cards.length && e.clientY < cards[0].getBoundingClientRect().top) {
+    if (cards[0].previousSibling !== drag.ph) body.insertBefore(drag.ph, cards[0]);
+  } else if (body.lastChild !== drag.ph) {
+    body.appendChild(drag.ph);
+  }
+}
+
+function autoScroll() {
+  if (!drag) return;
+  const edge = 70;
+  if (drag.y < edge) window.scrollBy(0, -14);
+  else if (drag.y > window.innerHeight - edge) window.scrollBy(0, 14);
+  if (isColumns()) {
+    if (drag.x < edge) $('wall').scrollBy(-14, 0);
+    else if (drag.x > window.innerWidth - edge) $('wall').scrollBy(14, 0);
+  }
+}
+
+function endDrag() {
+  if (!drag) return;
+  const { card, ph, before, timer } = drag;
+  clearInterval(timer);
+  window.removeEventListener('pointermove', moveDrag);
+  window.removeEventListener('pointerup', endDrag);
+  window.removeEventListener('pointercancel', endDrag);
+  card.classList.remove('dragging');
+  card.style.width = card.style.left = card.style.top = '';
+  ph.parentNode.insertBefore(card, ph);
+  ph.remove();
+  document.body.classList.remove('is-dragging');
+  drag = null;
+  const items = layoutItems();
+  if (JSON.stringify(items) === before) return;
+  // Apply the new order locally so a re-render keeps it.
+  const pos = {};
+  items.forEach((it, i) => { pos[it.id] = it; it.i = i; });
+  S.d.posts.forEach(p => { if (pos[p.id]) p.col = pos[p.id].col; });
+  S.d.posts.sort((a, b) => (pos[a.id] ? pos[a.id].i : -1) - (pos[b.id] ? pos[b.id].i : -1));
+  items.forEach(it => { delete it.i; });
+  write(run('reorder', S.id, items));
+}
+
+/* =================================================================
+   Start
+   ================================================================= */
+(function start() {
+  if (BOOT.view === 'board' && !BOOT.board) {
+    openBoard(BOOT.code);
+  } else if (BOOT.view === 'board') {
+    S.id = BOOT.code;
+    show('board');
+    applyData(BOOT.board);
+    startPoll();
+  } else if (BOOT.view === 'home') {
+    showHome(BOOT.home);
+  } else if (BOOT.view === 'notfound' || BOOT.view === 'closed') {
+    S.id = BOOT.code;
+    showMsg(BOOT.view);
+  } else {
+    showJoin();
+  }
+})();
+</script>
+</body>
+</html>
