@@ -6,7 +6,7 @@
 <title>Class Board</title>
 <script>
 // ▼▼▼ Paste the STUDENT web app URL (ends in /exec) between the quotes ▼▼▼
-const API = 'https://script.google.com/macros/s/AKfycbwgmphZaiDPnt-Zghyxov5_DDtZmpy_6NTP9XUgJXcMjJ63X6cbtxRqgxik2Jf5zf_n/exec';
+const API = 'https://script.google.com/macros/s/AKfycbzKEEgyV90yVAwuMomCDwbAvvzMP38Mu9pIPeBO4Bhk5Yvh3JjxPPxZ1XGu6ZWwkbo/exec';
 // ▲▲▲ That is the only line you ever need to edit in this file ▲▲▲
 </script>
 <style>
@@ -114,9 +114,33 @@ const API = 'https://script.google.com/macros/s/AKfycbwgmphZaiDPnt-Zghyxov5_DDtZ
   .approve button { flex: 1; border: 0; border-radius: 8px; padding: 7px; font-weight: 600; }
   .approve .yes { background: var(--accent); color: #fff; }
   .approve .no { background: rgba(255,255,255,.8); }
-  .acts-row { display: flex; gap: 8px; margin-top: 10px; }
+  .acts-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
   .pill { border: 0; background: rgba(255,255,255,.65); border-radius: 999px; padding: 5px 12px; font-size: .9rem; }
-  .pill.liked { background: #fff; color: #c0213f; font-weight: 600; }
+  .reacts { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .rchip { border: 1px solid transparent; background: rgba(255,255,255,.65); border-radius: 999px; padding: 3px 9px; font-size: .9rem; line-height: 1.3; }
+  .rchip.mine { background: #fff; border-color: rgba(34,32,27,.35); font-weight: 600; }
+  .radd { border: 1px dashed rgba(34,32,27,.3); background: rgba(255,255,255,.45); border-radius: 999px; padding: 3px 9px; font-size: .9rem; line-height: 1.3; color: var(--muted); }
+  .cmt .reacts { margin-top: 3px; gap: 4px; }
+  .cmt .rchip, .cmt .radd { font-size: .78rem; padding: 1px 7px; }
+  #picker { position: fixed; z-index: 30; background: #fff; border-radius: 999px; padding: 5px; display: flex; gap: 2px;
+            box-shadow: 0 6px 24px rgba(0,0,0,.22); }
+  #picker button { border: 0; background: transparent; font-size: 1.45rem; width: 42px; height: 42px; border-radius: 50%; line-height: 1; }
+  #picker button[aria-pressed=true] { background: #e8efe9; }
+  #picker button:hover { background: #f1eee6; }
+  del.d { color: #b3261e; text-decoration: line-through; text-decoration-thickness: 2px; background: rgba(179,38,30,.08); }
+  ins.i { text-decoration: underline; text-decoration-color: #1b7a2a; text-decoration-thickness: 2px; text-underline-offset: 3px;
+          background: rgba(255,255,255,.75); color: #0b5d1e; font-weight: 600; border-radius: 3px; padding: 0 2px; }
+  del.d + ins.i { margin-left: 3px; }
+  #slides.dark del.d { color: #ff9e95; background: rgba(255,120,110,.14); }
+  #slides.dark ins.i { color: #d6ffd9; background: rgba(110,230,130,.28); text-decoration-color: #9df0a6; }
+  .views { display: inline-flex; margin-top: 8px; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,.55); }
+  .views button { border: 0; background: transparent; padding: 3px 9px; font-size: .78rem; color: var(--muted); }
+  .views button[aria-pressed=true] { background: #fff; color: var(--ink); font-weight: 600; }
+  .corr-note { font-size: .78rem; color: #1b5e2a; margin-top: 6px; font-weight: 600; }
+  .accept { border: 0; background: #1b7a2a; color: #fff; border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: .85rem; margin-top: 8px; }
+  #cPreview { white-space: pre-wrap; overflow-wrap: anywhere; background: #faf8f3; border: 1px solid var(--line); border-radius: 10px;
+              padding: 10px 12px; min-height: 60px; font-size: 1.02rem; }
+  .legend { font-size: .8rem; color: var(--muted); margin: 6px 0 12px; }
 
   .comments { margin-top: 10px; background: rgba(255,255,255,.55); border-radius: 10px; padding: 8px 10px; }
   .cmt { padding: 6px 0; border-bottom: 1px solid rgba(34,32,27,.08); display: flex; gap: 6px; align-items: flex-start; }
@@ -328,6 +352,23 @@ const API = 'https://script.google.com/macros/s/AKfycbwgmphZaiDPnt-Zghyxov5_DDtZ
   </form>
 </div>
 
+<!-- Teacher's correction -->
+<div class="overlay" id="corrector">
+  <form class="sheet" id="correctForm">
+    <h2>Corregeix</h2>
+    <label class="field"><span>Corregeix el text directament</span>
+      <textarea id="cText" maxlength="1000"></textarea></label>
+    <div class="field"><span>Com ho veuran</span><div id="cPreview"></div>
+      <div class="legend"><del class="d">tatxat</del> = el que treus · <ins class="i">subratllat</ins> = el que afegeixes</div></div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="cRemove" style="margin-right:auto">Treu la correcció</button>
+      <button type="button" class="btn plain" id="cCancel">Cancel·la</button>
+      <button class="btn primary">Desa</button>
+    </div>
+  </form>
+</div>
+<div id="picker" hidden role="menu" aria-label="Reaccions"></div>
+
 <!-- New board -->
 <div class="overlay" id="newBoard">
   <form class="sheet" id="newBoardForm">
@@ -365,7 +406,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwgmphZaiDPnt-Zghyxov5_DDtZ
     <label class="toggle"><input type="checkbox" id="sLocked"><span><b>Tancat</b><small>Els alumnes no poden publicar ni comentar.</small></span></label>
     <label class="toggle"><input type="checkbox" id="sApproval"><span><b>Aprovació prèvia</b><small>Les publicacions i els comentaris dels alumnes no es mostren fins que els aproves.</small></span></label>
     <label class="toggle"><input type="checkbox" id="sNameReq"><span><b>Nom obligatori</b><small>Els alumnes han d'escriure el seu nom.</small></span></label>
-    <label class="toggle"><input type="checkbox" id="sLikes"><span><b>M'agrades</b><small>Els alumnes poden fer m'agrada a les publicacions.</small></span></label>
+    <label class="toggle"><input type="checkbox" id="sLikes"><span><b>Reaccions</b><small>Els alumnes poden reaccionar a les publicacions i als comentaris (❤️ 👍 😀 😂 😱 😢).</small></span></label>
     <label class="toggle"><input type="checkbox" id="sComments"><span><b>Comentaris</b><small>Els alumnes poden comentar les publicacions.</small></span></label>
     <div class="actions">
       <button type="button" class="btn plain" id="sCancel">Cancel·la</button>
@@ -538,7 +579,14 @@ function driveView(id) { return 'https://drive.google.com/file/d/' + encodeURICo
 let DEVICE = store.get('device', '');
 if (!DEVICE) { DEVICE = rid(24); store.set('device', DEVICE); }
 const TOK = store.get('tok', {});     // itemId -> secret key (lets this device change its own items)
-const LIKED = store.get('liked', {}); // postId -> 1
+const REACTS = ['❤️', '👍', '😀', '😂', '😱', '😢'];
+// itemId|emoji -> 1 for the reactions this device has given (older ♥ likes become ❤️).
+const MYR = store.get('react', null) || (function () {
+  const m = {};
+  Object.keys(store.get('liked', {})).forEach(id => { m[id + '|❤️'] = 1; });
+  return m;
+})();
+function saveMyr() { store.set('react', MYR); }
 const PEND = store.get('pend', {});   // itemId -> {b, kind, item}  my items waiting for approval
 function saveTok() { store.set('tok', TOK); }
 function savePend() { store.set('pend', PEND); }
@@ -552,6 +600,7 @@ const drafts = {};            // comment drafts
 const imgCache = {};          // fileId -> data URL or local object URL (own uploads, private images)
 const imgEls = {};            // fileId -> <img> reused between renders
 const mediaEls = {};          // fileId -> audio/video element reused between renders
+const viewMode = {};          // postId -> 'corr' | 'orig' | 'final' (corrected posts)
 
 /* =================================================================
    Backgrounds
@@ -1094,10 +1143,11 @@ function cardFor(p, hasName) {
 function cardSig(p, comments, hasName) {
   const m = S.d.meta;
   const open = !!openComments[p.id];
-  return JSON.stringify([p.text, p.name, p.color, p.status, p.edited, p.likes, !!LIKED[p.id], p.img, p.att,
+  const mine = it => REACTS.map(e => MYR[it.id + '|' + e] ? 1 : 0).join('');
+  return JSON.stringify([p.text, p.name, p.color, p.status, p.edited, p.reacts, mine(p), p.img, p.att,
     !!p.localImg, !!p.localUrl, p.sending, p.progress, p.role, p.time, S.teacher, !!TOK[p.id],
-    m.likes, m.comments, m.locked,
-    open ? comments.map(c => [c.id, c.text, c.status, c.edited, c.sending, c.name, c.role, !!TOK[c.id]]) : comments.length,
+    m.likes, m.comments, m.locked, p.corr, viewMode[p.id],
+    open ? comments.map(c => [c.id, c.text, c.status, c.edited, c.sending, c.name, c.role, !!TOK[c.id], c.reacts, mine(c)]) : comments.length,
     open, open && comments.some(c => c.id === editingComment) ? editingComment : '', open && hasName]);
 }
 
@@ -1121,6 +1171,7 @@ function fillCard(c, p, comments) {
   if (p.status === 'pending') top.appendChild(el('span', 'chip', 'Pendent d\'aprovació'));
   if (p.role === 'teacher') top.appendChild(el('span', 'chip teacher', 'Professorat'));
   top.appendChild(el('span', 'grow'));
+  if (T && !p.sending && p.text) top.appendChild(btn('x', '✍', 'Corregeix', () => openCorrector(p)));
   if (canChange(p)) top.appendChild(btn('x', '✎', 'Edita', () => openEditor(p)));
   if ((T || TOK[p.id]) && !p.sending) top.appendChild(btn('x', '✕', 'Esborra', () => removeItem(p, 'post')));
   c.slots.top.replaceChildren(...(top.children.length > 1 ? [top] : []));
@@ -1134,7 +1185,15 @@ function fillCard(c, p, comments) {
   }
 
   const body = [];
-  if (p.text) body.push(el('div', 'text', p.text));
+  const mode = viewMode[p.id] || 'corr';
+  if (p.corr) {
+    const t = el('div', 'text');
+    if (mode === 'corr') renderDiff(t, p.text, p.corr);
+    else t.textContent = mode === 'orig' ? p.text : p.corr;
+    body.push(t);
+  } else if (p.text) {
+    body.push(el('div', 'text', p.text));
+  }
   let status = when(p.time) + (p.edited ? ' · editat' : '');
   if (p.sending) status = p.sending === 'edit' ? 'Desant…' : (p.progress != null ? 'Pujant… ' + Math.round(p.progress * 100) + '%' : 'Publicant…');
   body.push(el('div', 'meta', (p.name || 'Anònim') + ' · ' + status));
@@ -1143,6 +1202,16 @@ function fillCard(c, p, comments) {
     fill.style.width = Math.round(p.progress * 100) + '%';
     bar.appendChild(fill);
     body.push(bar);
+  }
+  if (p.corr && !p.sending) {
+    const views = el('div', 'views');
+    [['corr', 'Correcció'], ['orig', 'Original'], ['final', 'Final']].forEach(v => {
+      const b = btn('', v[1], '', () => { viewMode[p.id] = v[0]; render(); });
+      b.setAttribute('aria-pressed', String(mode === v[0]));
+      views.appendChild(b);
+    });
+    body.push(views);
+    if (T || (TOK[p.id] && !m.locked)) body.push(btn('accept', '✓ Accepta les correccions', '', () => acceptCorr(p)));
   }
   c.slots.body.replaceChildren(...body);
 
@@ -1154,16 +1223,10 @@ function fillCard(c, p, comments) {
     foot.push(row);
   }
   const live = p.status === 'ok' && !p.sending;
-  const showLikes = live && m.likes;
+  const showReacts = live && m.likes;
   const showComments = live && (m.comments || comments.length > 0);
-  if (showLikes || showComments) {
+  if (showReacts || showComments) {
     const row = el('div', 'acts-row');
-    if (showLikes) {
-      const liked = !!LIKED[p.id];
-      const b = btn('pill' + (liked ? ' liked' : ''), (liked ? '♥ ' : '♡ ') + (p.likes || 0), liked ? 'Ja no m\'agrada' : 'M\'agrada', () => toggleLike(p));
-      b.setAttribute('aria-pressed', String(liked));
-      row.appendChild(b);
-    }
     if (showComments) {
       const b = btn('pill', '💬 ' + comments.length, 'Comentaris', () => {
         openComments[p.id] = !openComments[p.id];
@@ -1173,6 +1236,7 @@ function fillCard(c, p, comments) {
       b.setAttribute('aria-expanded', String(!!openComments[p.id]));
       row.appendChild(b);
     }
+    if (showReacts) row.appendChild(reactRow(p));
     foot.push(row);
     if (showComments && openComments[p.id]) foot.push(commentsPanel(p, comments));
   }
@@ -1279,6 +1343,11 @@ function commentsPanel(p, list) {
     body.appendChild(document.createTextNode(c.text + ' '));
     body.appendChild(el('span', 'when', c.sending ? (c.sending === 'edit' ? 'Desant…' : 'Enviant…') :
       (c.status === 'pending' ? 'Pendent d\'aprovació' : when(c.time) + (c.edited ? ' · editat' : ''))));
+    if (m.likes && c.status === 'ok' && !c.sending) {
+      const r = el('div');
+      r.appendChild(reactRow(c));
+      body.appendChild(r);
+    }
     row.appendChild(body);
     if (T && c.status === 'pending') row.appendChild(btn('x', '✓', 'Aprova', () => approveItem(c)));
     if (canChange(c)) row.appendChild(btn('x', '✎', 'Edita', () => {
@@ -1414,13 +1483,164 @@ function sendComment(p, text) {
   });
 }
 
-function toggleLike(p) {
-  const on = !LIKED[p.id];
-  if (on) LIKED[p.id] = 1; else delete LIKED[p.id];
-  store.set('liked', LIKED);
-  p.likes = Math.max(0, (p.likes || 0) + (on ? 1 : -1));
+/* ---------- reactions ---------- */
+function reactRow(it) {
+  const box = el('span', 'reacts');
+  const r = it.reacts || {};
+  REACTS.forEach(e => {
+    if (!r[e]) return;
+    const mine = !!MYR[it.id + '|' + e];
+    const b = btn('rchip' + (mine ? ' mine' : ''), e + ' ' + r[e], mine ? 'Treu la reacció ' + e : 'Reacciona ' + e, () => toggleReact(it, e));
+    b.setAttribute('aria-pressed', String(mine));
+    box.appendChild(b);
+  });
+  box.appendChild(btn('radd', '☺+', 'Reacciona', ev => openPicker(ev.currentTarget, it)));
+  return box;
+}
+function toggleReact(it, emoji) {
+  const key = it.id + '|' + emoji;
+  const on = !MYR[key];
+  if (on) MYR[key] = 1; else delete MYR[key];
+  saveMyr();
+  const setCount = n => {
+    it.reacts = Object.assign({}, it.reacts);
+    if (n > 0) it.reacts[emoji] = n; else delete it.reacts[emoji];
+  };
+  setCount(Math.max(0, ((it.reacts || {})[emoji] || 0) + (on ? 1 : -1)));
   render();
-  write(run('toggleLike', S.id, p.id, DEVICE, on), n => { p.likes = n; render(); });
+  write(run('react', S.id, it.id, emoji, DEVICE, on), n => { setCount(n); render(); });
+}
+function openPicker(anchor, it) {
+  const pk = $('picker');
+  pk.textContent = '';
+  REACTS.forEach(e => {
+    const b = btn('', e, e, () => { closePicker(); toggleReact(it, e); });
+    b.setAttribute('aria-pressed', String(!!MYR[it.id + '|' + e]));
+    pk.appendChild(b);
+  });
+  pk.hidden = false;
+  const r = anchor.getBoundingClientRect(), w = pk.offsetWidth, h = pk.offsetHeight;
+  const left = Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
+  let top = r.top - h - 8;
+  if (top < 8) top = r.bottom + 8;
+  pk.style.left = left + 'px';
+  pk.style.top = top + 'px';
+}
+function closePicker() { $('picker').hidden = true; }
+document.addEventListener('pointerdown', e => {
+  if (!$('picker').hidden && !e.target.closest('#picker, .radd')) closePicker();
+}, true);
+window.addEventListener('scroll', closePicker, { passive: true });
+
+/* ---------- corrections ---------- */
+// Splits text into words, spaces and punctuation, so changes are marked word by word.
+function tokens(s) {
+  return String(s || '').match(/\s+|[\p{L}\p{N}\p{M}'’_-]+|[^\s\p{L}\p{N}\p{M}]/gu) || [];
+}
+const diffMemo = new Map();
+function diffWords(a, b) {
+  const key = a + '\u0000' + b;
+  if (diffMemo.has(key)) return diffMemo.get(key);
+  const A = tokens(a), B = tokens(b), n = A.length, m = B.length;
+  let out = [];
+  const push = (t, s) => {
+    const last = out[out.length - 1];
+    if (last && last.t === t) last.s += s; else out.push({ t, s });
+  };
+  if (n * m > 600000) {
+    out = [{ t: 'del', s: a }, { t: 'ins', s: b }];
+  } else {
+    const L = [];
+    for (let i = 0; i <= n; i++) L.push(new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+      }
+    }
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (A[i] === B[j]) { push('eq', A[i]); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) { push('del', A[i]); i++; }
+      else { push('ins', B[j]); j++; }
+    }
+    while (i < n) push('del', A[i++]);
+    while (j < m) push('ins', B[j++]);
+    // Group a replaced phrase: [del a][ins very][ ][del lot][ins much] -> [del "a lot"][ins "very much"]
+    const grouped = [];
+    let k = 0;
+    while (k < out.length) {
+      if (out[k].t === 'eq') { grouped.push(out[k]); k++; continue; }
+      let d = '', ins = '', q = k;
+      while (q < out.length) {
+        const part = out[q];
+        if (part.t === 'del') d += part.s;
+        else if (part.t === 'ins') ins += part.s;
+        else if (!part.s.trim() && q + 1 < out.length && out[q + 1].t !== 'eq' && d && ins) { d += part.s; ins += part.s; }
+        else break;
+        q++;
+      }
+      // Keep a shared trailing space outside the marks.
+      let tail = '';
+      while (d && ins && /\s$/.test(d) && d.slice(-1) === ins.slice(-1)) { tail = d.slice(-1) + tail; d = d.slice(0, -1); ins = ins.slice(0, -1); }
+      if (d) grouped.push({ t: 'del', s: d });
+      if (ins) grouped.push({ t: 'ins', s: ins });
+      if (tail) grouped.push({ t: 'eq', s: tail });
+      k = q;
+    }
+    out = grouped;
+  }
+  if (diffMemo.size > 300) diffMemo.clear();
+  diffMemo.set(key, out);
+  return out;
+}
+function renderDiff(box, a, b) {
+  box.textContent = '';
+  diffWords(a, b).forEach(part => {
+    if (part.t === 'eq') { box.appendChild(document.createTextNode(part.s)); return; }
+    if (!part.s.trim()) {   // changes in spacing only: show the new spacing, unmarked
+      if (part.t === 'ins') box.appendChild(document.createTextNode(part.s));
+      return;
+    }
+    const n = document.createElement(part.t === 'del' ? 'del' : 'ins');
+    n.className = part.t === 'del' ? 'd' : 'i';
+    n.textContent = part.s;
+    box.appendChild(n);
+  });
+}
+
+let correcting = null, cpTimer = null;
+function openCorrector(p) {
+  correcting = p;
+  $('cText').value = p.corr || p.text;
+  $('cRemove').hidden = !p.corr;
+  updateCorrPreview();
+  open('corrector');
+  setTimeout(() => $('cText').focus(), 50);
+}
+function updateCorrPreview() {
+  if (correcting) renderDiff($('cPreview'), correcting.text, $('cText').value);
+}
+$('cText').addEventListener('input', () => { clearTimeout(cpTimer); cpTimer = setTimeout(updateCorrPreview, 80); });
+function closeCorrector() { close('corrector'); correcting = null; }
+$('cCancel').onclick = closeCorrector;
+$('cRemove').onclick = () => saveCorrection('');
+$('correctForm').onsubmit = e => { e.preventDefault(); saveCorrection($('cText').value.trim()); };
+function saveCorrection(text) {
+  const p = correcting;
+  closeCorrector();
+  if (!p) return;
+  p.corr = text && text !== p.text ? text : '';
+  viewMode[p.id] = 'corr';
+  render();
+  write(run('correct', S.id, p.id, text), r => { p.corr = r.corr; render(); });
+}
+function acceptCorr(p) {
+  if (!confirm('Vols acceptar les correccions? El text corregit substituirà l\'original.')) return;
+  p.text = p.corr;
+  p.corr = '';
+  p.edited = Date.now();
+  render();
+  write(run('acceptCorrection', S.id, p.id, TOK[p.id] || ''));
 }
 
 function removeItem(item, kind, reject) {
@@ -1736,8 +1956,9 @@ function slideNode(s) {
   if (s.col) text.appendChild(el('div', 'sl-col', s.col));
   text.appendChild(el('h2', 'sl-name', p.name || 'Anònim'));
   if (p.text) {
-    const t = el('div', 'sl-text', p.text);
-    t.style.fontSize = textSize(p.text.length, hasMedia);
+    const t = el('div', 'sl-text');
+    if (p.corr) renderDiff(t, p.text, p.corr); else t.textContent = p.text;
+    t.style.fontSize = textSize(Math.max(p.text.length, (p.corr || '').length), hasMedia);
     text.appendChild(t);
   }
   box.appendChild(text);
@@ -1760,7 +1981,7 @@ function slideNode(s) {
 function drawSlide() {
   const s = SS.list[SS.i];
   $('slStage').replaceChildren(slideNode(s));
-  SS.shown = s.k === 'title' ? 'title' : JSON.stringify([s.p.text, s.p.name, s.p.img, s.p.att, s.col]);
+  SS.shown = s.k === 'title' ? 'title' : JSON.stringify([s.p.text, s.p.corr, s.p.name, s.p.img, s.p.att, s.col]);
   $('slCount').textContent = SS.i === 0 ? 'Inici' : SS.i + ' / ' + (SS.list.length - 1);
   // Preload the next photo so it appears instantly.
   const n = SS.list[SS.i + 1];
@@ -1782,7 +2003,7 @@ function updateSlides() {
   if (i < 0) i = Math.min(SS.i, SS.list.length - 1);
   SS.i = i;
   const s = SS.list[i];
-  const sig = s.k === 'title' ? 'title' : JSON.stringify([s.p.text, s.p.name, s.p.img, s.p.att, s.col]);
+  const sig = s.k === 'title' ? 'title' : JSON.stringify([s.p.text, s.p.corr, s.p.name, s.p.img, s.p.att, s.col]);
   const playing = [...$('slStage').querySelectorAll('audio, video')].some(m => !m.paused);
   if (sig !== SS.shown && !playing) drawSlide();
   else $('slCount').textContent = SS.i === 0 ? 'Inici' : SS.i + ' / ' + (SS.list.length - 1);
@@ -1821,6 +2042,8 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if ($('settings').classList.contains('open')) closeSettings();
   ['lightbox', 'present', 'newBoard'].forEach(close);
+  if ($('corrector').classList.contains('open')) closeCorrector();
+  closePicker();
   if ($('composer').classList.contains('open')) closeComposer();
 });
 document.addEventListener('fullscreenchange', () => {
@@ -2173,8 +2396,9 @@ async function saveEdit() {
   const a = attach;
   const keep = a && a.keep;
   if (!text && !a) { $('pErr').textContent = 'Escriu alguna cosa o afegeix una foto, un vídeo o un àudio.'; return; }
-  const prev = { text: p.text, color: p.color, img: p.img, localImg: p.localImg, localUrl: p.localUrl, pub: p.pub, att: p.att, edited: p.edited, status: p.status };
+  const prev = { text: p.text, color: p.color, img: p.img, localImg: p.localImg, localUrl: p.localUrl, pub: p.pub, att: p.att, edited: p.edited, status: p.status, corr: p.corr };
   const changes = { text, color: pColor };
+  if (text !== p.text) p.corr = '';   // a correction refers to the old text
   p.text = text; p.color = pColor; p.edited = Date.now(); p.sending = 'edit';
   if (!keep) {
     if (a) {
