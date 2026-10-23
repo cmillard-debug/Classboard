@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class Board</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f3f0e8; }
+  iframe { display: block; width: 100%; height: 100vh; height: 100dvh; border: 0; }
+</style>
+</head>
+<body>
+<iframe id="app" title="Class Board" allow="clipboard-write"></iframe>
+<script>
+  // Student link of the Class Board web app (the deployment with access "Anyone").
+  var APP = 'https://script.google.com/macros/s/AKfycbw26pMux4MpEySQHKuiBHbk7NneH9sw-HKXCLwQCXHv75aBJlOrRYBV0rTlecOhNd0jLg/exec';
+  var b = new URLSearchParams(location.search).get('b') || '';
+  document.getElementById('app').src = APP + (b ? '?b=' + encodeURIComponent(b) : '');
+</script>
+</body>
+</html>
